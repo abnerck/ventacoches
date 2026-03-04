@@ -1,0 +1,665 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Coche - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── PAGE ── */
+    .admin-page {
+        background: var(--light-bg);
+        min-height: 100vh;
+        padding-top: 90px;
+        padding-bottom: 60px;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+        background: var(--dark-bg);
+        padding: 28px 0 24px;
+        margin-bottom: 2rem;
+        border-bottom: 3px solid var(--primary);
+        position: relative;
+        overflow: hidden;
+    }
+    .page-header::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: radial-gradient(circle at 80% 50%, rgba(10,77,173,.2) 0%, transparent 60%);
+        pointer-events: none;
+    }
+    .page-header .page-title {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 2rem;
+        letter-spacing: 2px;
+        color: white;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .page-header .page-title i { color: var(--secondary); }
+    .page-header .page-subtitle {
+        color: rgba(255,255,255,.5);
+        font-size: .85rem;
+        margin: .3rem 0 0;
+        font-weight: 400;
+    }
+
+    /* back btn */
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: rgba(255,255,255,.08);
+        border: 1.5px solid rgba(255,255,255,.15);
+        color: rgba(255,255,255,.8);
+        border-radius: 50px;
+        padding: 8px 18px;
+        font-size: .85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all .25s;
+    }
+    .btn-back:hover {
+        background: rgba(255,255,255,.15);
+        color: white;
+        transform: translateX(-3px);
+    }
+
+    /* ── ERROR ALERT ── */
+    .form-errors {
+        background: rgba(239,68,68,.08);
+        border: 1.5px solid rgba(239,68,68,.25);
+        border-radius: 14px;
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1.5rem;
+    }
+    .form-errors .err-title {
+        font-weight: 700;
+        font-size: .9rem;
+        color: #dc2626;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: .6rem;
+    }
+    .form-errors ul { margin: 0; padding-left: 1.2rem; color: #dc2626; font-size: .88rem; }
+
+    /* ── SECTION CARD ── */
+    .form-card {
+        background: white;
+        border-radius: 18px;
+        border: 2px solid var(--gray-light);
+        box-shadow: 0 4px 18px rgba(0,0,0,.06);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    .form-card-header {
+        background: var(--grad-blue);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .form-card-header h5 {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 1.4rem;
+        letter-spacing: 1.2px;
+        color: white;
+        margin: 0;
+    }
+    .form-card-header i { color: rgba(255,255,255,.75); font-size: 1rem; }
+    .form-card-body { padding: 1.6rem; }
+
+    /* ── FORM ELEMENTS ── */
+    .form-label {
+        font-weight: 600;
+        font-size: .82rem;
+        text-transform: uppercase;
+        letter-spacing: .7px;
+        color: #555;
+        margin-bottom: .4rem;
+    }
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid var(--gray-light);
+        padding: 10px 14px;
+        font-size: .95rem;
+        transition: border-color .25s, box-shadow .25s;
+        background: #fafafa;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 .2rem rgba(10,77,173,.12);
+        background: white;
+    }
+    .input-group .form-control { border-right: none; }
+    .input-group-text {
+        background: var(--light-bg);
+        border: 2px solid var(--gray-light);
+        border-left: none;
+        border-radius: 0 10px 10px 0;
+        font-weight: 700;
+        color: var(--primary);
+        font-size: .9rem;
+    }
+    .form-text { font-size: .78rem; color: #999; margin-top: .3rem; }
+    textarea.form-control { resize: vertical; min-height: 120px; }
+
+    /* ── PHOTO GALLERY ── */
+    .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .photo-tile {
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2.5px solid var(--gray-light);
+        transition: border-color .25s, transform .25s;
+    }
+    .photo-tile.primary {
+        border-color: var(--primary);
+        box-shadow: 0 4px 14px rgba(10,77,173,.2);
+    }
+    .photo-tile:hover { transform: translateY(-3px); }
+    .photo-tile img {
+        width: 100%; height: 100px;
+        object-fit: cover;
+        display: block;
+    }
+    .photo-tile .primary-badge {
+        position: absolute; top: 6px; left: 6px;
+        background: var(--grad-blue);
+        color: white;
+        font-size: .65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        padding: 2px 8px;
+        border-radius: 50px;
+    }
+    .photo-tile .photo-actions {
+        position: absolute; top: 5px; right: 5px;
+        display: flex; gap: 4px;
+    }
+    .photo-action-btn {
+        width: 28px; height: 28px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .75rem;
+        transition: all .2s;
+        backdrop-filter: blur(4px);
+    }
+    .photo-action-btn.star  { background: rgba(212,175,55,.85); color: #000; }
+    .photo-action-btn.trash { background: rgba(239,68,68,.85); color: white; }
+    .photo-action-btn:hover { transform: scale(1.15); }
+
+    /* file preview */
+    .file-preview-wrap {
+        background: rgba(10,77,173,.05);
+        border: 1.5px dashed rgba(10,77,173,.25);
+        border-radius: 12px;
+        padding: 1rem 1.2rem;
+        margin-top: .7rem;
+        font-size: .88rem;
+        color: var(--primary);
+    }
+    .file-preview-wrap .preview-title {
+        font-weight: 700;
+        margin-bottom: .4rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .file-preview-wrap ul { margin: 0; padding-left: 1.2rem; color: #555; }
+
+    /* no photos notice */
+    .no-photos-notice {
+        background: rgba(95,168,255,.08);
+        border: 1px solid rgba(95,168,255,.2);
+        border-radius: 12px;
+        padding: .9rem 1.1rem;
+        font-size: .88rem;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 1rem;
+    }
+
+    /* ── FORM ACTIONS ── */
+    .form-actions {
+        background: white;
+        border-radius: 18px;
+        border: 2px solid var(--gray-light);
+        box-shadow: 0 4px 18px rgba(0,0,0,.06);
+        padding: 1.4rem 1.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 11px 24px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: .88rem;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all .3s;
+    }
+    .btn-action.cancel {
+        background: transparent;
+        border: 2px solid var(--gray-light);
+        color: #666;
+    }
+    .btn-action.cancel:hover { border-color: #999; color: #333; }
+
+    .btn-action.preview {
+        background: rgba(10,77,173,.1);
+        color: var(--primary);
+        border: 2px solid rgba(10,77,173,.2);
+    }
+    .btn-action.preview:hover {
+        background: var(--primary);
+        color: white;
+        border-color: transparent;
+        transform: translateY(-2px);
+    }
+
+    .btn-action.save {
+        background: var(--grad-blue);
+        color: white;
+        box-shadow: 0 5px 16px rgba(10,77,173,.3);
+    }
+    .btn-action.save:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 26px rgba(10,77,173,.42);
+    }
+    .btn-action.save:disabled {
+        opacity: .7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* ── MODAL ── */
+    .modal-content {
+        border-radius: 18px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 25px 60px rgba(0,0,0,.2);
+    }
+    .modal-header {
+        background: var(--dark-bg);
+        border: none;
+        padding: 1.2rem 1.5rem;
+    }
+    .modal-title {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 1.4rem;
+        letter-spacing: 1px;
+        color: white;
+    }
+    .modal-header .btn-close { filter: invert(1); opacity: .6; }
+    .modal-body {
+        padding: 1.5rem;
+        font-size: .95rem;
+        color: #555;
+        line-height: 1.6;
+    }
+    .modal-footer {
+        border-top: 1px solid var(--gray-light);
+        padding: 1rem 1.5rem;
+        gap: .6rem;
+    }
+    .btn-modal-cancel {
+        border: 2px solid var(--gray-light);
+        background: transparent;
+        color: #666;
+        border-radius: 50px;
+        padding: 8px 20px;
+        font-weight: 600;
+        font-size: .88rem;
+        cursor: pointer;
+        transition: all .2s;
+    }
+    .btn-modal-cancel:hover { border-color: #999; color: #333; }
+    .btn-modal-confirm {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 8px 22px;
+        font-weight: 700;
+        font-size: .88rem;
+        cursor: pointer;
+        transition: all .25s;
+        box-shadow: 0 4px 12px rgba(239,68,68,.3);
+    }
+    .btn-modal-confirm:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(239,68,68,.4); }
+
+    @media (max-width: 768px) {
+        .admin-page { padding-top: 72px; }
+        .form-actions { flex-direction: column; }
+        .btn-action { width: 100%; justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- ── PAGE HEADER ── -->
+<div class="page-header">
+    <div class="container d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">
+                <i class="fas fa-pen-to-square"></i> Editar Coche
+            </h1>
+            <p class="page-subtitle">{{ car.marca }} {{ car.modelo }} &nbsp;·&nbsp; ID #{{ car.id }}</p>
+        </div>
+        <a href="{{ url_for('admin_cars') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Volver al panel
+        </a>
+    </div>
+</div>
+
+
+<div class="admin-page">
+    <div class="container">
+
+        <!-- Form errors -->
+        {% if form.errors %}
+        <div class="form-errors" data-aos="fade-down">
+            <div class="err-title"><i class="fas fa-circle-exclamation"></i> Errores en el formulario</div>
+            <ul>
+                {% for field, errors in form.errors.items() %}
+                    {% for error in errors %}
+                        <li>{{ form[field].label.text }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form method="POST"
+              action="{{ url_for('edit_car', id=car.id) }}"
+              enctype="multipart/form-data"
+              id="editCarForm">
+            {{ form.hidden_tag() }}
+
+            <div class="row g-4">
+
+                <!-- ══ LEFT: Basic data ══ -->
+                <div class="col-lg-6" data-aos="fade-right">
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <i class="fas fa-car"></i>
+                            <h5>Datos Básicos</h5>
+                        </div>
+                        <div class="form-card-body">
+
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <label class="form-label">Marca *</label>
+                                    <input type="text" class="form-control" name="marca" id="marca"
+                                           value="{{ form.marca.data or car.marca }}" required
+                                           placeholder="Ej: BMW">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Modelo *</label>
+                                    <input type="text" class="form-control" name="modelo" id="modelo"
+                                           value="{{ form.modelo.data or car.modelo }}" required
+                                           placeholder="Ej: Serie 5">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">Año *</label>
+                                    <input type="number" class="form-control" name="año" id="año"
+                                           value="{{ form.año.data or car.año }}"
+                                           min="1900" max="2030" required>
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">Precio *</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" class="form-control"
+                                               name="precio" id="precio"
+                                               value="{{ form.precio.data or car.precio }}"
+                                               min="0" required>
+                                        <span class="input-group-text">€</span>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">Kilometraje</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control"
+                                               name="kilometraje" id="kilometraje"
+                                               value="{{ form.kilometraje.data or car.kilometraje }}"
+                                               min="0">
+                                        <span class="input-group-text">km</span>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Combustible</label>
+                                    <select class="form-select" name="tipo_combustible" id="tipo_combustible">
+                                        <option value="gasolina"  {% if (form.tipo_combustible.data or car.tipo_combustible) == 'gasolina'  %}selected{% endif %}>⛽ Gasolina</option>
+                                        <option value="diesel"    {% if (form.tipo_combustible.data or car.tipo_combustible) == 'diesel'    %}selected{% endif %}>🛢️ Diésel</option>
+                                        <option value="hibrido"   {% if (form.tipo_combustible.data or car.tipo_combustible) == 'hibrido'   %}selected{% endif %}>🌿 Híbrido</option>
+                                        <option value="electrico" {% if (form.tipo_combustible.data or car.tipo_combustible) == 'electrico' %}selected{% endif %}>⚡ Eléctrico</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <i class="fas fa-file-lines"></i>
+                            <h5>Descripción</h5>
+                        </div>
+                        <div class="form-card-body">
+                            <label class="form-label">Descripción del vehículo</label>
+                            <textarea class="form-control" name="descripcion" id="descripcion"
+                                      rows="6"
+                                      placeholder="Describe el vehículo, sus características y estado…">{{ form.descripcion.data or car.descripcion or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- ══ RIGHT: Photos ══ -->
+                <div class="col-lg-6" data-aos="fade-left">
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <i class="fas fa-images"></i>
+                            <h5>Fotos del Coche</h5>
+                        </div>
+                        <div class="form-card-body">
+
+                            <!-- Existing photos -->
+                            {% if car.fotos %}
+                            <label class="form-label">Fotos actuales ({{ car.fotos|length }})</label>
+                            <div class="photo-grid mb-4">
+                                {% for photo in car.fotos %}
+                                <div class="photo-tile {% if photo.is_primary %}primary{% endif %}" id="photo-{{ photo.id }}">
+                                    <img src="/static/uploads/cars/{{ car.id }}/{{ photo.filename }}"
+                                         alt="Foto {{ loop.index }}"
+                                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22110%22 height=%22100%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22110%22 height=%22100%22/%3E%3Ctext x=%2250%25%22 y=%2255%25%22 font-size=%2212%22 fill=%22%239ca3af%22 text-anchor=%22middle%22 font-family=%22sans-serif%22%3ESin foto%3C/text%3E%3C/svg%3E'">
+
+                                    {% if photo.is_primary %}
+                                    <div class="primary-badge"><i class="fas fa-star me-1"></i>Principal</div>
+                                    {% endif %}
+
+                                    <div class="photo-actions">
+                                        {% if not photo.is_primary %}
+                                        <button type="button"
+                                                class="photo-action-btn star set-primary-btn"
+                                                data-photo-id="{{ photo.id }}"
+                                                title="Hacer principal">
+                                            <i class="fas fa-star"></i>
+                                        </button>
+                                        {% endif %}
+                                        <button type="button"
+                                                class="photo-action-btn trash delete-photo-btn"
+                                                data-photo-id="{{ photo.id }}"
+                                                title="Eliminar foto">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="no-photos-notice">
+                                <i class="fas fa-circle-info"></i>
+                                Este coche no tiene fotos aún. Añade una a continuación.
+                            </div>
+                            {% endif %}
+
+                            <!-- Upload new photos -->
+                            <label class="form-label">Añadir más fotos</label>
+                            <input type="file" class="form-control" id="fotos" name="fotos"
+                                   multiple accept="image/*">
+                            <p class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Puedes seleccionar múltiples imágenes (Ctrl + clic)
+                            </p>
+                            <div id="filePreview"></div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /row -->
+
+
+            <!-- ── FORM ACTIONS ── -->
+            <div class="form-actions" data-aos="fade-up">
+                <a href="{{ url_for('admin_cars') }}" class="btn-action cancel">
+                    <i class="fas fa-xmark"></i> Cancelar
+                </a>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{{ url_for('car_detail', id=car.id) }}" target="_blank" class="btn-action preview">
+                        <i class="fas fa-eye"></i> Ver Público
+                    </a>
+                    <button type="submit" class="btn-action save" id="submitBtn">
+                        <i class="fas fa-floppy-disk"></i> Guardar Cambios
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+
+<!-- ── CONFIRM MODAL ── -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-triangle-exclamation me-2" style="color:#fbbf24;"></i> Confirmar acción</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalMessage"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">
+                    <i class="fas fa-xmark me-1"></i> Cancelar
+                </button>
+                <button type="button" class="btn-modal-confirm" id="confirmActionBtn">
+                    <i class="fas fa-check me-1"></i> Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    // ── File preview ──
+    document.getElementById('fotos').addEventListener('change', function () {
+        const preview = document.getElementById('filePreview');
+        preview.innerHTML = '';
+        if (!this.files.length) return;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'file-preview-wrap';
+        wrap.innerHTML = `<div class="preview-title"><i class="fas fa-images"></i> ${this.files.length} archivo(s) seleccionado(s):</div>`;
+
+        const ul = document.createElement('ul');
+        for (const file of this.files) {
+            const li = document.createElement('li');
+            li.textContent = file.name;
+            ul.appendChild(li);
+        }
+        wrap.appendChild(ul);
+        preview.appendChild(wrap);
+    });
+
+    // ── Delete photo ──
+    document.querySelectorAll('.delete-photo-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const photoId = this.dataset.photoId;
+            const modal   = new bootstrap.Modal(document.getElementById('confirmModal'));
+            document.getElementById('modalMessage').innerHTML =
+                '¿Seguro que quieres eliminar esta foto? <strong>Esta acción no se puede deshacer.</strong>';
+            document.getElementById('confirmActionBtn').onclick = () => submitAction(`/admin/coche/eliminar-foto/${photoId}`);
+            modal.show();
+        });
+    });
+
+    // ── Set primary photo ──
+    document.querySelectorAll('.set-primary-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            submitAction(`/admin/coche/set-primary/${this.dataset.photoId}`);
+        });
+    });
+
+    function submitAction(url) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        const csrf = document.createElement('input');
+        csrf.type  = 'hidden';
+        csrf.name  = 'csrf_token';
+        csrf.value = document.querySelector('input[name="csrf_token"]').value;
+        form.appendChild(csrf);
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    // ── Submit validation ──
+    document.getElementById('editCarForm').addEventListener('submit', function (e) {
+        const btn = document.getElementById('submitBtn');
+        const marca   = document.getElementById('marca').value.trim();
+        const modelo  = document.getElementById('modelo').value.trim();
+        const año     = document.getElementById('año').value;
+        const precio  = document.getElementById('precio').value;
+
+        if (!marca || !modelo || !año || !precio) {
+            e.preventDefault();
+            alert('Por favor, completa todos los campos obligatorios (*)');
+            return;
+        }
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Guardando…';
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,671 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio - AutoVenta Premium{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── HERO ── */
+    .hero-section {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--dark-bg);
+        overflow: hidden;
+        /* FIX: padding-top compensa exactamente la navbar fija */
+        padding: var(--navbar-height) 15px 60px;
+    }
+    .hero-bg {
+        position: absolute; inset: 0;
+        background:
+            radial-gradient(circle at 20% 50%, rgba(10,77,173,.18) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(95,168,255,.15) 0%, transparent 50%),
+            linear-gradient(135deg, #111827 0%, #1A1A2E 100%);
+        z-index: 1;
+    }
+    .hero-section::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
+        z-index: 10;
+    }
+    .hero-shapes { position: absolute; inset: 0; overflow: hidden; z-index: 2; pointer-events: none; }
+    .shape { position: absolute; opacity: .07; }
+    .shape-1 {
+        width: 350px; height: 350px;
+        background: var(--grad-blue);
+        border-radius: 50%;
+        top: 8%; right: 6%;
+        animation: float 8s ease-in-out infinite;
+    }
+    .shape-2 {
+        width: 220px; height: 220px;
+        background: var(--grad-dark);
+        border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+        bottom: 18%; left: 4%;
+        animation: float 6s ease-in-out infinite reverse;
+    }
+    .shape-3 {
+        width: 160px; height: 160px;
+        border: 3px solid var(--secondary);
+        border-radius: 50%;
+        top: 55%; right: 28%;
+        animation: rotate 22s linear infinite;
+    }
+    @keyframes float {
+        0%,100% { transform: translateY(0) rotate(0deg); }
+        50%      { transform: translateY(-22px) rotate(180deg); }
+    }
+    @keyframes rotate { to { transform: rotate(360deg); } }
+
+    .hero-content {
+        position: relative;
+        z-index: 4;
+        /* FIX: empuja el contenido hacia abajo dentro del hero para centrarlo correctamente */
+        padding-top: 20px;
+    }
+
+    .hero-title {
+        font-family: 'Bebas Neue', cursive;
+        font-size: clamp(2.8rem, 8vw, 5.5rem);
+        line-height: 1.05;
+        color: #fff;
+        letter-spacing: 2px;
+        margin-bottom: 1.4rem;
+    }
+    .hero-title .gradient-text {
+        background: var(--grad-blue);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle {
+        font-size: clamp(.95rem, 2vw, 1.15rem);
+        color: rgba(255,255,255,.8);
+        font-weight: 300;
+        max-width: 620px;
+        margin: 0 auto 2.2rem;
+        line-height: 1.7;
+    }
+    .hero-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1.2rem;
+    }
+
+    .hero-watermark {
+        position: absolute;
+        bottom: 5%; right: 5%;
+        font-family: 'Bebas Neue', cursive;
+        font-size: clamp(5rem, 15vw, 12rem);
+        color: rgba(95,168,255,.03);
+        letter-spacing: 8px;
+        pointer-events: none;
+        z-index: 2;
+        user-select: none;
+    }
+
+    /* Responsive hero */
+    @media (max-width: 991px) {
+        .hero-section {
+            min-height: 100svh;
+            padding-top: calc(var(--navbar-height) + 20px);
+            align-items: center;
+        }
+        .hero-title { font-size: clamp(2.6rem, 9vw, 5rem); }
+        .hero-subtitle { font-size: clamp(1rem, 3.5vw, 1.3rem); }
+    }
+    @media (max-width: 768px) {
+        .hero-section {
+            padding-top: calc(var(--navbar-height) + 30px);
+        }
+        .hero-shapes { display: none; }
+        .hero-watermark { font-size: clamp(4rem, 18vw, 10rem); opacity: 0.04; }
+        .hero-buttons { flex-direction: column; align-items: center; gap: 1rem; }
+    }
+
+    /* ── FEATURES ── */
+    .features-section {
+        padding: 80px 0;
+        background: white;
+    }
+    .feature-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem 1.5rem;
+        border: 2px solid var(--gray-light);
+        box-shadow: 0 4px 15px rgba(0,0,0,.05);
+        transition: all .4s ease;
+        height: 100%;
+        text-align: center;
+    }
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 18px 40px rgba(10,77,173,.13);
+        border-color: var(--primary);
+    }
+    .feature-icon-wrap {
+        font-size: 2.5rem;
+        background: var(--grad-blue);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    .feature-card h3 {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 1.4rem;
+        letter-spacing: 1px;
+        margin-bottom: .6rem;
+        color: var(--text-dark);
+    }
+    .feature-card p { color: #666; font-size: .95rem; line-height: 1.6; margin: 0; }
+
+    /* ── STATS ── */
+    /* stats-section ya está en base.html, solo sobreescribimos lo necesario */
+
+    /* ── CARS ── */
+    .cars-section {
+        padding: 80px 0;
+        background: var(--light-bg);
+    }
+
+    /* FIX cards: flex column para que el botón quede siempre al fondo */
+    .car-card-v2 {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 2px solid var(--gray-light);
+        box-shadow: 0 4px 15px rgba(0,0,0,.06);
+        transition: all .4s ease;
+        height: 100%;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+    .car-card-v2:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 45px rgba(10,77,173,.15);
+        border-color: var(--primary);
+    }
+    .car-img-wrap { overflow: hidden; height: 220px; flex-shrink: 0; }
+    .car-img-wrap img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        transition: transform .5s ease;
+    }
+    .car-card-v2:hover .car-img-wrap img { transform: scale(1.06); }
+    .car-img-placeholder {
+        width: 100%; height: 220px;
+        background: linear-gradient(135deg, #1a1a2e, #0A4DAD);
+        display: flex; align-items: center; justify-content: center;
+        color: rgba(255,255,255,.3); font-size: 3rem;
+    }
+
+    .badge-premium {
+        position: absolute; top: 14px; right: 14px;
+        background: var(--grad-blue);
+        color: white;
+        font-size: .72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 1px;
+        padding: 4px 12px;
+        border-radius: 50px;
+        z-index: 2;
+    }
+    .badge-new {
+        position: absolute; top: 14px; left: 14px;
+        background: linear-gradient(135deg,#16a34a,#22c55e);
+        color: white;
+        font-size: .72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 1px;
+        padding: 4px 12px;
+        border-radius: 50px;
+        z-index: 2;
+    }
+
+    /* FIX card-body: flex para empujar botón al fondo */
+    .car-card-v2 .card-body {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .car-card-v2 .car-title {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 1.45rem;
+        letter-spacing: 1px;
+        color: var(--text-dark);
+        margin-bottom: .2rem;
+    }
+    .car-price {
+        font-size: 1.7rem;
+        font-weight: 700;
+        background: var(--grad-blue);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: .6rem 0 1rem;
+        display: block;
+    }
+
+    .car-specs {
+        display: flex;
+        gap: .4rem;
+        padding: .9rem 0;
+        border-top: 1px solid var(--gray-light);
+        border-bottom: 1px solid var(--gray-light);
+        margin-bottom: 1rem;
+    }
+    .spec-item { flex: 1; text-align: center; }
+    .spec-icon {
+        font-size: 1.1rem;
+        color: var(--primary);
+        margin-bottom: .25rem;
+        display: block;
+    }
+    .spec-label { font-size: .72rem; color: #999; text-transform: uppercase; letter-spacing: .8px; display: block; }
+    .spec-value { font-size: .88rem; font-weight: 700; color: var(--text-dark); display: block; }
+
+    .car-desc {
+        font-size: .88rem;
+        color: #777;
+        line-height: 1.55;
+        margin-bottom: 1rem;
+        flex: 1; /* FIX: empuja el botón al fondo */
+    }
+
+    /* FIX: botón siempre al fondo de la card */
+    .car-card-v2 .card-body .btn-primary-custom {
+        margin-top: auto;
+    }
+
+    /* FIX columnas: flex para que height:100% funcione */
+    .cars-section .row {
+        align-items: stretch;
+    }
+    .cars-section .col-lg-4,
+    .cars-section .col-md-6 {
+        display: flex;
+        flex-direction: column;
+    }
+    .cars-section .col-lg-4 .car-card-v2,
+    .cars-section .col-md-6 .car-card-v2 {
+        flex: 1;
+    }
+
+    /* ── WHY US ── */
+    .why-section {
+        padding: 80px 0;
+        background: var(--dark-bg);
+    }
+    .why-card {
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 16px;
+        padding: 2rem 1.5rem;
+        text-align: center;
+        transition: all .4s;
+        height: 100%;
+    }
+    .why-card:hover {
+        transform: translateY(-8px);
+        border-color: var(--primary);
+        box-shadow: 0 15px 40px rgba(10,77,173,.2);
+    }
+    .why-icon {
+        width: 64px; height: 64px;
+        background: var(--grad-blue);
+        border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.6rem; color: white;
+        margin: 0 auto 1.2rem;
+    }
+    .why-card h4 {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 1.4rem;
+        letter-spacing: 1px;
+        color: white;
+        margin-bottom: .6rem;
+    }
+    .why-card p { color: rgba(255,255,255,.65); font-size: .93rem; line-height: 1.6; margin: 0; }
+
+    /* ── BRANDS ── */
+    .brands-section {
+        padding: 70px 0;
+        background: white;
+    }
+    .brand-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--light-bg);
+        border: 2px solid var(--gray-light);
+        border-radius: 50px;
+        padding: .65rem 1.4rem;
+        font-weight: 700;
+        font-size: .95rem;
+        color: var(--text-dark);
+        transition: all .3s;
+        cursor: default;
+    }
+    .brand-chip:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(10,77,173,.12);
+    }
+    .brand-chip i { color: var(--primary); font-size: 1.1rem; }
+
+    /* empty state */
+    .empty-state {
+        text-align: center;
+        padding: 5rem 0;
+    }
+    .empty-state i {
+        font-size: 5rem;
+        background: var(--grad-blue);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: block;
+        margin-bottom: 1.5rem;
+    }
+    .empty-state h3 {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 2rem;
+        letter-spacing: 1px;
+        color: var(--text-dark);
+        margin-bottom: .8rem;
+    }
+    .empty-state p { color: #888; max-width: 400px; margin: 0 auto 2rem; }
+
+    /* FIX section-title: sobreescribe el ::after centrado para las secciones con text-center */
+    .text-center .section-title::after {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    .section-subtitle { font-size: 1.1rem; color: #777; max-width: 700px; margin: 0 auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="hero-section">
+    <div class="hero-bg"></div>
+    <div class="hero-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+    <div class="hero-watermark">PREMIUM</div>
+
+    <div class="container hero-content">
+        <div class="row justify-content-center">
+            <div class="col-xl-9 col-lg-10 col-md-11 text-center" data-aos="fade-up">
+                <h1 class="hero-title">
+                    EXCELLENCE IN<br>
+                    <span class="gradient-text">AUTOMOTIVE</span><br>
+                    LUXURY
+                </h1>
+                <p class="hero-subtitle">
+                    Descubra nuestra exclusiva colección de vehículos de alta gama,
+                    cuidadosamente seleccionados para los clientes más exigentes.
+                    Donde el lujo se encuentra con el rendimiento.
+                </p>
+                <div class="hero-buttons">
+                    <a href="{{ url_for('public_cars') }}" class="btn-primary-custom">
+                        <i class="fas fa-car"></i> Explorar Colección
+                    </a>
+                    <a href="#cars" class="btn-outline-custom">
+                        <i class="fas fa-list"></i> Últimas Incorporaciones
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- COCHES -->
+<section class="cars-section" id="cars">
+    <div class="container">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title dark">Últimas Incorporaciones</h2>
+            <p class="section-subtitle mt-4">Vehículos exclusivos seleccionados para los clientes más exigentes</p>
+        </div>
+
+        {% if cars %}
+        <div class="row g-4">
+            {% for car in cars %}
+            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
+                <div class="car-card-v2">
+                    {% if car.precio > 50000 %}
+                    <div class="badge-premium"><i class="fas fa-star me-1"></i>Premium</div>
+                    {% endif %}
+                    {% if car.año >= 2022 %}
+                    <div class="badge-new">Nuevo</div>
+                    {% endif %}
+
+                    <div class="car-img-wrap">
+                        {% if car.photo_url %}
+                        <img src="{{ car.photo_url }}" alt="{{ car.marca }} {{ car.modelo }}">
+                        {% else %}
+                        <div class="car-img-placeholder">
+                            <i class="fas fa-car"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="card-body">
+                        <p class="car-title">{{ car.marca }} {{ car.modelo }}</p>
+                        <span class="car-price">{{ "{:,.0f}".format(car.precio) }} €</span>
+
+                        <div class="car-specs">
+                            <div class="spec-item">
+                                <span class="spec-icon"><i class="fas fa-calendar-alt"></i></span>
+                                <span class="spec-label">Año</span>
+                                <span class="spec-value">{{ car.año }}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-icon"><i class="fas fa-tachometer-alt"></i></span>
+                                <span class="spec-label">Km</span>
+                                <span class="spec-value">
+                                    {% if car.kilometraje %}{{ "{:,.0f}".format(car.kilometraje) }}{% else %}N/A{% endif %}
+                                </span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-icon"><i class="fas fa-gas-pump"></i></span>
+                                <span class="spec-label">Combust.</span>
+                                <span class="spec-value">
+                                    {% if car.tipo_combustible == 'gasolina' %}Gasolina
+                                    {% elif car.tipo_combustible == 'diesel' %}Diésel
+                                    {% elif car.tipo_combustible == 'hibrido' %}Híbrido
+                                    {% elif car.tipo_combustible == 'electrico' %}⚡ Eléct.
+                                    {% else %}{{ car.tipo_combustible }}{% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        {% if car.descripcion %}
+                        <p class="car-desc">{{ car.descripcion[:110] }}…</p>
+                        {% endif %}
+
+                        <a href="{{ url_for('car_detail', id=car.id) }}" class="btn-primary-custom w-100 justify-content-center">
+                            <i class="fas fa-arrow-right-circle"></i> Ver Detalles
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-5" data-aos="fade-up">
+            <a href="{{ url_for('public_cars') }}" class="btn-primary-custom" style="padding: 14px 40px;">
+                <i class="fas fa-th-large"></i> Ver Colección Completa
+            </a>
+        </div>
+
+        {% else %}
+        <div class="empty-state" data-aos="fade-up">
+            <i class="fas fa-car-side"></i>
+            <h3>Colección en Preparación</h3>
+            <p>Nuestro equipo está seleccionando los vehículos más exclusivos. Vuelve pronto.</p>
+            <a href="{{ url_for('home') }}" class="btn-outline-custom" style="color: var(--primary); border-color: var(--primary);">
+                <i class="fas fa-refresh"></i> Volver al inicio
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section">
+    <div class="container">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title dark">¿Por qué Elegirnos?</h2>
+            <p class="section-subtitle mt-4">Tu mejor opción en vehículos de alta gama</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
+                <div class="feature-card">
+                    <span class="feature-icon-wrap"><i class="fas fa-shield-halved"></i></span>
+                    <h3>Certificación Premium</h3>
+                    <p>Cada vehículo pasa por una rigurosa inspección de 150 puntos para garantizar la máxima calidad.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
+                <div class="feature-card">
+                    <span class="feature-icon-wrap"><i class="fas fa-user-tie"></i></span>
+                    <h3>Asesoramiento Personal</h3>
+                    <p>Nuestros expertos te guiarán en la selección del vehículo perfecto para tu estilo de vida.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
+                <div class="feature-card">
+                    <span class="feature-icon-wrap"><i class="fas fa-award"></i></span>
+                    <h3>Garantía Extendida</h3>
+                    <p>Las mejores garantías del sector, asegurando tu inversión a largo plazo con total tranquilidad.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="400">
+                <div class="feature-card">
+                    <span class="feature-icon-wrap"><i class="fas fa-handshake"></i></span>
+                    <h3>Financiación Flexible</h3>
+                    <p>Planes de financiación a medida para que el coche de tus sueños esté siempre a tu alcance.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- STATS -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-6 col-md-3" data-aos="zoom-in" data-aos-delay="100">
+                <div class="stat-item">
+                    <span class="stat-number counter" data-target="500">0</span>+
+                    <span class="stat-label">Vehículos Vendidos</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3" data-aos="zoom-in" data-aos-delay="200">
+                <div class="stat-item">
+                    <span class="stat-number counter" data-target="15">0</span>
+                    <span class="stat-label">Años de Experiencia</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3" data-aos="zoom-in" data-aos-delay="300">
+                <div class="stat-item">
+                    <span class="stat-number counter" data-target="98">0</span>%
+                    <span class="stat-label">Clientes Satisfechos</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3" data-aos="zoom-in" data-aos-delay="400">
+                <div class="stat-item">
+                    <span class="stat-number counter" data-target="24">0</span>/7
+                    <span class="stat-label">Atención al Cliente</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WHY US -->
+<section class="why-section">
+    <div class="container">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title light">Nuestra Promesa</h2>
+            <p class="section-subtitle light mt-4">Excelencia en cada detalle, desde la selección hasta la entrega</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="why-card">
+                    <div class="why-icon"><i class="fas fa-search"></i></div>
+                    <h4>Selección Rigurosa</h4>
+                    <p>Solo incorporamos vehículos que superan nuestra inspección de 150 puntos. Sin compromisos con la calidad.</p>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="why-card">
+                    <div class="why-icon"><i class="fas fa-file-contract"></i></div>
+                    <h4>Transparencia Total</h4>
+                    <p>Historial completo de cada vehículo, sin sorpresas. Lo que ves es exactamente lo que recibes.</p>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="why-card">
+                    <div class="why-icon"><i class="fas fa-headset"></i></div>
+                    <h4>Posventa Premium</h4>
+                    <p>Nuestro equipo de atención sigue contigo mucho después de la compra. Para siempre, si lo necesitas.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- BRANDS -->
+<section class="brands-section">
+    <div class="container">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title dark">Marcas Exclusivas</h2>
+            <p class="section-subtitle mt-4">Las marcas más prestigiosas del mundo del motor</p>
+        </div>
+        <div class="d-flex flex-wrap justify-content-center gap-3" data-aos="fade-up" data-aos-delay="100">
+            <span class="brand-chip"><i class="fas fa-star"></i> Mercedes-Benz</span>
+            <span class="brand-chip"><i class="fas fa-star"></i> BMW</span>
+            <span class="brand-chip"><i class="fas fa-star"></i> Audi</span>
+            <span class="brand-chip"><i class="fas fa-star"></i> Porsche</span>
+            <span class="brand-chip"><i class="fas fa-star"></i> Lexus</span>
+            <span class="brand-chip"><i class="fas fa-star"></i> Maserati</span>
+            <span class="brand-chip"><i class="fas fa-star"></i> Bentley</span>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const counters = document.querySelectorAll('.counter');
+    const countUp = () => {
+        counters.forEach(counter => {
+            const target = +counter.getAttribute('data-target');
+            const count  = +counter.innerText;
+            const inc    = target / 140;
+            if (count < target) {
+                counter.innerText = Math.ceil(count + inc);
+                setTimeout(countUp, 12);
+            } else {
+                counter.innerText = target;
+            }
+        });
+    };
+    const statsObs = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) { countUp(); statsObs.disconnect(); }
+        });
+    }, { threshold: .3 });
+    const statsEl = document.querySelector('.stats-section');
+    if (statsEl) statsObs.observe(statsEl);
+</script>
+{% endblock %}

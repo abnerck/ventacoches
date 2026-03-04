@@ -1,0 +1,514 @@
+{% extends "base.html" %}
+
+{% block title %}Añadir Nuevo Coche - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── PAGE ── */
+    .admin-page {
+        background: var(--light-bg);
+        min-height: 100vh;
+        padding-top: 90px;
+        padding-bottom: 60px;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+        background: var(--dark-bg);
+        padding: 28px 0 24px;
+        margin-bottom: 2rem;
+        border-bottom: 3px solid var(--primary);
+        position: relative;
+        overflow: hidden;
+    }
+    .page-header::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: radial-gradient(circle at 80% 50%, rgba(10,77,173,.2) 0%, transparent 60%);
+        pointer-events: none;
+    }
+    .page-header .page-title {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 2rem;
+        letter-spacing: 2px;
+        color: white;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .page-header .page-title i { color: var(--secondary); }
+    .page-header .page-subtitle {
+        color: rgba(255,255,255,.45);
+        font-size: .82rem;
+        margin: .3rem 0 0;
+    }
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: rgba(255,255,255,.08);
+        border: 1.5px solid rgba(255,255,255,.15);
+        color: rgba(255,255,255,.8);
+        border-radius: 50px;
+        padding: 8px 18px;
+        font-size: .85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all .25s;
+    }
+    .btn-back:hover {
+        background: rgba(255,255,255,.15);
+        color: white;
+        transform: translateX(-3px);
+    }
+
+    /* ── FORM CARD ── */
+    .form-card {
+        background: white;
+        border-radius: 18px;
+        border: 2px solid var(--gray-light);
+        box-shadow: 0 4px 18px rgba(0,0,0,.06);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    .form-card-header {
+        background: var(--grad-blue);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .form-card-header h5 {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 1.4rem;
+        letter-spacing: 1.2px;
+        color: white;
+        margin: 0;
+    }
+    .form-card-header i { color: rgba(255,255,255,.75); font-size: 1rem; }
+    .form-card-body { padding: 1.6rem; }
+
+    /* ── FORM ELEMENTS ── */
+    .form-label {
+        font-weight: 600;
+        font-size: .82rem;
+        text-transform: uppercase;
+        letter-spacing: .7px;
+        color: #555;
+        margin-bottom: .4rem;
+    }
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid var(--gray-light);
+        padding: 10px 14px;
+        font-size: .95rem;
+        background: #fafafa;
+        transition: border-color .25s, box-shadow .25s;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 .2rem rgba(10,77,173,.12);
+        background: white;
+    }
+    .input-group .form-control { border-right: none; border-radius: 10px 0 0 10px; }
+    .input-group-text {
+        background: var(--light-bg);
+        border: 2px solid var(--gray-light);
+        border-left: none;
+        border-radius: 0 10px 10px 0;
+        font-weight: 700;
+        color: var(--primary);
+        font-size: .9rem;
+    }
+    textarea.form-control { resize: vertical; min-height: 130px; }
+
+    /* field error */
+    .field-error {
+        color: #ef4444;
+        font-size: .78rem;
+        margin-top: .3rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    /* ── UPLOAD AREA ── */
+    .upload-zone {
+        border: 2.5px dashed rgba(10,77,173,.3);
+        border-radius: 16px;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        background: rgba(10,77,173,.03);
+        cursor: pointer;
+        transition: all .3s;
+        position: relative;
+    }
+    .upload-zone:hover,
+    .upload-zone.dragover {
+        background: rgba(10,77,173,.07);
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(10,77,173,.1);
+    }
+    .upload-zone .upload-icon {
+        width: 64px; height: 64px;
+        background: var(--grad-blue);
+        border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.6rem;
+        color: white;
+        margin: 0 auto 1rem;
+        transition: transform .3s;
+    }
+    .upload-zone:hover .upload-icon { transform: translateY(-4px) scale(1.05); }
+    .upload-zone h6 {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--text-dark);
+        margin-bottom: .4rem;
+    }
+    .upload-zone p {
+        font-size: .82rem;
+        color: #aaa;
+        margin: 0;
+        line-height: 1.5;
+    }
+    .upload-zone .upload-hint {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: var(--grad-blue);
+        color: white;
+        border-radius: 50px;
+        padding: 5px 14px;
+        font-size: .78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+        margin-top: .9rem;
+    }
+
+    /* preview grid */
+    .preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+    }
+    .preview-item {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 2px solid var(--gray-light);
+        aspect-ratio: 1;
+    }
+    .preview-item:first-child {
+        border-color: var(--primary);
+        box-shadow: 0 3px 10px rgba(10,77,173,.2);
+    }
+    .preview-item:first-child::after {
+        content: 'Principal';
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: var(--grad-blue);
+        color: white;
+        font-size: .6rem;
+        font-weight: 700;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        padding: 3px;
+    }
+    .preview-item img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    /* upload note */
+    .upload-note {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: .78rem;
+        color: #aaa;
+        margin-top: .6rem;
+    }
+    .upload-note i { color: var(--secondary); }
+
+    /* ── FORM ACTIONS ── */
+    .form-actions {
+        background: white;
+        border-radius: 18px;
+        border: 2px solid var(--gray-light);
+        box-shadow: 0 4px 18px rgba(0,0,0,.06);
+        padding: 1.4rem 1.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 11px 24px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: .88rem;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all .3s;
+    }
+    .btn-action.cancel {
+        background: transparent;
+        border: 2px solid var(--gray-light);
+        color: #777;
+    }
+    .btn-action.cancel:hover { border-color: #999; color: #333; }
+    .btn-action.save {
+        background: var(--grad-blue);
+        color: white;
+        box-shadow: 0 5px 16px rgba(10,77,173,.3);
+    }
+    .btn-action.save:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 26px rgba(10,77,173,.42);
+        color: white;
+    }
+    .btn-action.save:disabled { opacity: .7; cursor: not-allowed; transform: none; }
+
+    @media (max-width: 768px) {
+        .admin-page { padding-top: 72px; }
+        .form-actions { flex-direction: column; }
+        .btn-action { width: 100%; justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- ── PAGE HEADER ── -->
+<div class="page-header">
+    <div class="container d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">
+                <i class="fas fa-circle-plus"></i> Añadir Nuevo Coche
+            </h1>
+            <p class="page-subtitle">Completa los datos para añadir un vehículo al inventario</p>
+        </div>
+        <a href="{{ url_for('admin_cars') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Volver al panel
+        </a>
+    </div>
+</div>
+
+
+<div class="admin-page">
+    <div class="container">
+
+        <form method="POST" action="" enctype="multipart/form-data" id="addCarForm">
+            {{ form.hidden_tag() }}
+
+            <div class="row g-4">
+
+                <!-- ══ LEFT: Basic data ══ -->
+                <div class="col-lg-6" data-aos="fade-right">
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <i class="fas fa-car"></i>
+                            <h5>Datos Básicos</h5>
+                        </div>
+                        <div class="form-card-body">
+                            <div class="row g-3">
+
+                                <div class="col-6">
+                                    {{ form.marca.label(class="form-label") }}
+                                    {{ form.marca(class="form-control", placeholder="Ej: BMW") }}
+                                    {% for e in form.marca.errors %}
+                                    <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="col-6">
+                                    {{ form.modelo.label(class="form-label") }}
+                                    {{ form.modelo(class="form-control", placeholder="Ej: Serie 5") }}
+                                    {% for e in form.modelo.errors %}
+                                    <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="col-4">
+                                    {{ form.año.label(class="form-label") }}
+                                    {{ form.año(class="form-control", placeholder="2023") }}
+                                    {% for e in form.año.errors %}
+                                    <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="col-4">
+                                    {{ form.precio.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.precio(class="form-control", placeholder="45000") }}
+                                        <span class="input-group-text">€</span>
+                                    </div>
+                                    {% for e in form.precio.errors %}
+                                    <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="col-4">
+                                    {{ form.kilometraje.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.kilometraje(class="form-control", placeholder="25000") }}
+                                        <span class="input-group-text">km</span>
+                                    </div>
+                                    {% for e in form.kilometraje.errors %}
+                                    <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="col-12">
+                                    {{ form.tipo_combustible.label(class="form-label") }}
+                                    {{ form.tipo_combustible(class="form-select") }}
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <i class="fas fa-file-lines"></i>
+                            <h5>Descripción</h5>
+                        </div>
+                        <div class="form-card-body">
+                            {{ form.descripcion.label(class="form-label") }}
+                            {{ form.descripcion(class="form-control", rows=6,
+                               placeholder="Describe el vehículo: equipamiento, estado, extras…") }}
+                            {% for e in form.descripcion.errors %}
+                            <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- ══ RIGHT: Photos ══ -->
+                <div class="col-lg-6" data-aos="fade-left">
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <i class="fas fa-images"></i>
+                            <h5>Fotos del Coche</h5>
+                        </div>
+                        <div class="form-card-body">
+
+                            <!-- Drop zone -->
+                            <div class="upload-zone" id="uploadZone"
+                                 onclick="document.getElementById('fotos').click()">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-arrow-up"></i>
+                                </div>
+                                <h6>Arrastra tus fotos aquí</h6>
+                                <p>o haz clic para seleccionar desde tu dispositivo</p>
+                                <p>JPG, PNG, WEBP · Máx. 16 MB por imagen</p>
+                                <span class="upload-hint">
+                                    <i class="fas fa-plus"></i> Seleccionar fotos
+                                </span>
+                            </div>
+
+                            <input type="file" class="d-none" id="fotos" name="fotos"
+                                   multiple accept="image/*">
+
+                            <!-- Preview -->
+                            <div class="preview-grid" id="imagePreview"></div>
+
+                            <p class="upload-note">
+                                <i class="fas fa-circle-info"></i>
+                                La primera foto seleccionada será la imagen principal.
+                            </p>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /row -->
+
+
+            <!-- ── FORM ACTIONS ── -->
+            <div class="form-actions" data-aos="fade-up">
+                <a href="{{ url_for('admin_cars') }}" class="btn-action cancel">
+                    <i class="fas fa-xmark"></i> Cancelar
+                </a>
+                <button type="submit" class="btn-action save" id="submitBtn">
+                    <i class="fas fa-floppy-disk"></i> Guardar Coche
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    // ── Image preview ──
+    function previewImages(files) {
+        const container = document.getElementById('imagePreview');
+        container.innerHTML = '';
+        for (const file of files) {
+            if (!file.type.startsWith('image/')) continue;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const wrap = document.createElement('div');
+                wrap.className = 'preview-item';
+                const img = document.createElement('img');
+                img.src   = e.target.result;
+                img.title = file.name;
+                wrap.appendChild(img);
+                container.appendChild(wrap);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    document.getElementById('fotos').addEventListener('change', function () {
+        previewImages(this.files);
+    });
+
+    // ── Drag & drop ──
+    const zone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fotos');
+
+    zone.addEventListener('dragover', e => {
+        e.preventDefault();
+        zone.classList.add('dragover');
+    });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        const dt = e.dataTransfer;
+        // Assign files to input
+        try {
+            fileInput.files = dt.files;
+        } catch (_) {}
+        previewImages(dt.files);
+    });
+
+    // ── Submit state ──
+    document.getElementById('addCarForm').addEventListener('submit', function () {
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Guardando…';
+    });
+</script>
+{% endblock %}

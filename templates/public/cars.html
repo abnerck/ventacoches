@@ -1,0 +1,621 @@
+{% extends "base.html" %}
+
+{% block title %}Coches en Venta - AutoVenta Premium{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── PAGE WRAPPER ── */
+    .catalog-page {
+        background: var(--light-bg);
+        min-height: 100vh;
+        padding-bottom: 80px;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+        background: var(--dark-bg);
+        padding: calc(var(--navbar-height) + 32px) 0 36px;
+        border-bottom: 3px solid var(--primary);
+        position: relative;
+        overflow: hidden;
+    }
+    .page-header::before {
+        content: '';
+        position: absolute; inset: 0;
+        background:
+            radial-gradient(circle at 80% 50%, rgba(10,77,173,.22) 0%, transparent 60%),
+            radial-gradient(circle at 10% 80%, rgba(95,168,255,.1) 0%, transparent 50%);
+        pointer-events: none;
+    }
+    .page-header-watermark {
+        position: absolute;
+        right: -20px; top: 50%;
+        transform: translateY(-50%);
+        font-family: 'Bebas Neue', cursive;
+        font-size: clamp(5rem, 12vw, 10rem);
+        color: rgba(255,255,255,.03);
+        letter-spacing: 6px;
+        pointer-events: none;
+        user-select: none;
+        white-space: nowrap;
+    }
+    .page-header .page-title {
+        font-family: 'Bebas Neue', cursive;
+        font-size: clamp(2rem, 5vw, 3rem);
+        letter-spacing: 2px;
+        color: white;
+        margin: 0 0 .4rem;
+        line-height: 1;
+    }
+    .page-header .page-title span {
+        background: var(--grad-blue);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .page-header .page-subtitle {
+        color: rgba(255,255,255,.55);
+        font-size: .92rem;
+        font-weight: 400;
+        margin: 0;
+    }
+    .count-pill {
+        display: inline-block;
+        background: rgba(255,255,255,.1);
+        color: rgba(255,255,255,.8);
+        font-size: .75rem;
+        font-weight: 700;
+        padding: 4px 14px;
+        border-radius: 50px;
+        letter-spacing: .5px;
+        margin-top: .8rem;
+        border: 1px solid rgba(255,255,255,.15);
+    }
+    .count-pill i { margin-right: 5px; color: var(--secondary); }
+
+    /* ── FILTERS BAR ── */
+    .filters-bar {
+        background: white;
+        border-bottom: 2px solid var(--gray-light);
+        padding: 1rem 0;
+        position: sticky;
+        top: var(--navbar-height);
+        z-index: 100;
+        box-shadow: 0 4px 16px rgba(0,0,0,.06);
+    }
+    .filter-group { position: relative; }
+    .filter-group .filter-icon {
+        position: absolute;
+        left: 14px; top: 50%;
+        transform: translateY(-50%);
+        color: #bbb;
+        font-size: .85rem;
+        pointer-events: none;
+        z-index: 3;
+    }
+    .filter-group .form-control,
+    .filter-group .form-select {
+        padding-left: 38px;
+        border-radius: 50px;
+        border: 2px solid var(--gray-light);
+        font-size: .88rem;
+        background: var(--light-bg);
+        transition: border-color .25s, box-shadow .25s;
+        height: 42px;
+    }
+    .filter-group .form-control:focus,
+    .filter-group .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 .18rem rgba(10,77,173,.12);
+        background: white;
+        outline: none;
+    }
+    .btn-reset-filter {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: transparent;
+        border: 2px solid var(--gray-light);
+        color: #999;
+        border-radius: 50px;
+        padding: 0 16px;
+        height: 42px;
+        font-size: .82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all .25s;
+        white-space: nowrap;
+    }
+    .btn-reset-filter:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* results info */
+    .results-info {
+        font-size: .85rem;
+        color: #999;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .results-info strong { color: var(--primary); }
+
+    /* ── GRID ── */
+    .catalog-grid {
+        padding-top: 2rem;
+    }
+
+    /* ── CAR CARD ── */
+    .car-card-pub {
+        background: white;
+        border-radius: 18px;
+        overflow: hidden;
+        border: 2px solid var(--gray-light);
+        box-shadow: 0 4px 15px rgba(0,0,0,.06);
+        transition: all .4s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    .car-card-pub:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 22px 48px rgba(10,77,173,.16);
+        border-color: var(--primary);
+    }
+
+    /* image */
+    .car-img-wrap {
+        overflow: hidden;
+        height: 230px;
+        flex-shrink: 0;
+        position: relative;
+    }
+    .car-img-wrap img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        transition: transform .5s ease;
+    }
+    .car-card-pub:hover .car-img-wrap img { transform: scale(1.06); }
+    .car-img-placeholder {
+        width: 100%; height: 230px;
+        background: linear-gradient(135deg, #1a1a2e, #0A4DAD);
+        display: flex; align-items: center; justify-content: center;
+        color: rgba(255,255,255,.2); font-size: 3.5rem;
+    }
+
+    /* overlay on hover */
+    .car-img-wrap::after {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(to top, rgba(10,17,38,.5) 0%, transparent 50%);
+        opacity: 0;
+        transition: opacity .4s;
+    }
+    .car-card-pub:hover .car-img-wrap::after { opacity: 1; }
+
+    /* badges */
+    .badge-premium {
+        position: absolute; top: 14px; right: 14px;
+        background: var(--grad-blue);
+        color: white;
+        font-size: .7rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 1px;
+        padding: 4px 12px; border-radius: 50px;
+        z-index: 2;
+    }
+    .badge-new {
+        position: absolute; top: 14px; left: 14px;
+        background: linear-gradient(135deg,#16a34a,#22c55e);
+        color: white;
+        font-size: .7rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 1px;
+        padding: 4px 12px; border-radius: 50px;
+        z-index: 2;
+    }
+
+    /* body */
+    .car-card-pub .card-body {
+        padding: 1.4rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .car-brand {
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: var(--primary);
+        margin-bottom: .2rem;
+    }
+    .car-title {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 1.5rem;
+        letter-spacing: 1px;
+        color: var(--text-dark);
+        line-height: 1.1;
+        margin-bottom: .1rem;
+    }
+    .car-price {
+        font-size: 1.8rem;
+        font-weight: 800;
+        background: var(--grad-blue);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: .5rem 0 1rem;
+        display: block;
+        line-height: 1;
+    }
+
+    /* specs strip */
+    .car-specs {
+        display: flex;
+        gap: .3rem;
+        padding: .8rem 0;
+        border-top: 1px solid var(--gray-light);
+        border-bottom: 1px solid var(--gray-light);
+        margin-bottom: 1rem;
+    }
+    .spec-item { flex: 1; text-align: center; }
+    .spec-icon { font-size: 1rem; color: var(--primary); margin-bottom: .2rem; display: block; }
+    .spec-label { font-size: .68rem; color: #bbb; text-transform: uppercase; letter-spacing: .7px; display: block; }
+    .spec-value { font-size: .84rem; font-weight: 700; color: var(--text-dark); display: block; }
+
+    .car-desc {
+        font-size: .87rem;
+        color: #888;
+        line-height: 1.55;
+        margin-bottom: 1rem;
+        flex: 1;
+    }
+
+    /* button always at bottom */
+    .car-card-pub .card-body .btn-primary-custom {
+        margin-top: auto;
+    }
+
+    /* ── GRID COLUMNS ── */
+    .catalog-grid .col-xl-4,
+    .catalog-grid .col-lg-4,
+    .catalog-grid .col-md-6 {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-catalog {
+        text-align: center;
+        padding: 6rem 2rem;
+    }
+    .empty-catalog i {
+        font-size: 4.5rem;
+        background: var(--grad-blue);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: block;
+        margin-bottom: 1.4rem;
+    }
+    .empty-catalog h3 {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 2.2rem;
+        letter-spacing: 1px;
+        color: var(--text-dark);
+        margin-bottom: .7rem;
+    }
+    .empty-catalog p { color: #aaa; max-width: 400px; margin: 0 auto 2rem; }
+
+    /* no results inline */
+    .no-results-msg {
+        text-align: center;
+        padding: 4rem 2rem;
+        display: none;
+    }
+    .no-results-msg i { font-size: 3rem; color: #d1d5db; display: block; margin-bottom: 1rem; }
+    .no-results-msg p { color: #aaa; margin: 0; }
+
+    @media (max-width: 768px) {
+        .filters-bar .row > div { margin-bottom: .5rem; }
+        .results-info { display: none; }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="catalog-page">
+
+    <!-- ── PAGE HEADER ── -->
+    <div class="page-header">
+        <div class="page-header-watermark">CATÁLOGO</div>
+        <div class="container" data-aos="fade-up">
+            <p class="page-subtitle">AutoVenta Premium &rsaquo; Catálogo</p>
+            <h1 class="page-title">Coches en <span>Venta</span></h1>
+            <span class="count-pill">
+                <i class="fas fa-car"></i>
+                {{ cars.total }} vehículos disponibles
+            </span>
+        </div>
+    </div>
+
+    <!-- ── FILTERS BAR ── -->
+    <div class="filters-bar">
+        <div class="container">
+            <div class="row g-2 align-items-center">
+
+                <!-- Search -->
+                <div class="col-md-4 col-sm-12">
+                    <div class="filter-group">
+                        <i class="fas fa-magnifying-glass filter-icon"></i>
+                        <input type="text" class="form-control" id="searchInput"
+                               placeholder="Buscar marca, modelo…">
+                    </div>
+                </div>
+
+                <!-- Brand -->
+                <div class="col-md-2 col-6">
+                    <div class="filter-group">
+                        <i class="fas fa-tag filter-icon"></i>
+                        <select class="form-select" id="brandFilter">
+                            <option value="">Marca</option>
+                            {% set brands = [] %}
+                            {% for car in cars.items %}
+                                {% if car.marca not in brands %}
+                                    {% set _ = brands.append(car.marca) %}
+                                    <option value="{{ car.marca }}">{{ car.marca }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Fuel -->
+                <div class="col-md-2 col-6">
+                    <div class="filter-group">
+                        <i class="fas fa-gas-pump filter-icon"></i>
+                        <select class="form-select" id="fuelFilter">
+                            <option value="">Combustible</option>
+                            <option value="gasolina">Gasolina</option>
+                            <option value="diesel">Diésel</option>
+                            <option value="hibrido">Híbrido</option>
+                            <option value="electrico">Eléctrico</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Price -->
+                <div class="col-md-2 col-6">
+                    <div class="filter-group">
+                        <i class="fas fa-euro-sign filter-icon"></i>
+                        <select class="form-select" id="priceFilter">
+                            <option value="">Precio</option>
+                            <option value="0-20000">Hasta 20.000 €</option>
+                            <option value="20000-50000">20.000 – 50.000 €</option>
+                            <option value="50000-100000">50.000 – 100.000 €</option>
+                            <option value="100000-9999999">+100.000 €</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Reset + count -->
+                <div class="col-md-2 col-6 d-flex align-items-center justify-content-end gap-3">
+                    <span class="results-info">
+                        <strong id="visibleCount">{{ cars.total }}</strong> resultados
+                    </span>
+                    <button class="btn-reset-filter" id="resetFilters">
+                        <i class="fas fa-rotate-left"></i> Limpiar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── CATALOG GRID ── -->
+    <div class="container catalog-grid">
+
+        {% if cars.items %}
+
+        <div class="row g-4" id="carsGrid">
+            {% for car in cars.items %}
+            <div class="col-xl-4 col-lg-4 col-md-6 car-col"
+                 data-brand="{{ car.marca }}"
+                 data-fuel="{{ car.tipo_combustible }}"
+                 data-price="{{ car.precio }}"
+                 data-search="{{ car.marca }} {{ car.modelo }} {{ car.tipo_combustible }}"
+                 data-aos="fade-up"
+                 data-aos-delay="{{ (loop.index0 % 3) * 100 }}">
+
+                <div class="car-card-pub">
+
+                    {% if car.precio > 50000 %}
+                    <div class="badge-premium"><i class="fas fa-star me-1"></i>Premium</div>
+                    {% endif %}
+                    {% if car.año >= 2022 %}
+                    <div class="badge-new">Nuevo</div>
+                    {% endif %}
+
+                    <div class="car-img-wrap">
+                        {% if car.photo_url %}
+                        <img src="{{ car.photo_url }}"
+                             alt="{{ car.marca }} {{ car.modelo }}"
+                             loading="lazy">
+                        {% else %}
+                        <div class="car-img-placeholder">
+                            <i class="fas fa-car"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="card-body">
+                        <p class="car-brand">{{ car.marca }}</p>
+                        <p class="car-title">{{ car.modelo }}</p>
+                        <span class="car-price">{{ "{:,.0f}".format(car.precio) }} €</span>
+
+                        <div class="car-specs">
+                            <div class="spec-item">
+                                <span class="spec-icon"><i class="fas fa-calendar-alt"></i></span>
+                                <span class="spec-label">Año</span>
+                                <span class="spec-value">{{ car.año }}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-icon"><i class="fas fa-tachometer-alt"></i></span>
+                                <span class="spec-label">Km</span>
+                                <span class="spec-value">
+                                    {% if car.kilometraje %}{{ "{:,.0f}".format(car.kilometraje) }}{% else %}N/A{% endif %}
+                                </span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-icon"><i class="fas fa-gas-pump"></i></span>
+                                <span class="spec-label">Combust.</span>
+                                <span class="spec-value">
+                                    {% if car.tipo_combustible == 'gasolina' %}Gasolina
+                                    {% elif car.tipo_combustible == 'diesel' %}Diésel
+                                    {% elif car.tipo_combustible == 'hibrido' %}Híbrido
+                                    {% elif car.tipo_combustible == 'electrico' %}⚡ Eléct.
+                                    {% else %}{{ car.tipo_combustible }}{% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        {% if car.descripcion %}
+                        <p class="car-desc">{{ car.descripcion[:120] }}…</p>
+                        {% endif %}
+
+                        <a href="{{ url_for('car_detail', id=car.id) }}"
+                           class="btn-primary-custom w-100 justify-content-center">
+                            <i class="fas fa-arrow-right-circle"></i> Ver Detalles
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- no results message -->
+        <div class="no-results-msg" id="noResultsMsg">
+            <i class="fas fa-magnifying-glass"></i>
+            <p>No se encontraron vehículos con los filtros seleccionados.<br>
+               <button class="btn-reset-filter mt-3" id="resetFilters2" style="margin:0 auto;">
+                   <i class="fas fa-rotate-left"></i> Limpiar filtros
+               </button>
+            </p>
+        </div>
+
+        <!-- ── PAGINACIÓN ── -->
+        {% if cars.pages > 1 %}
+        <nav class="d-flex justify-content-center mt-5" data-aos="fade-up">
+            <ul class="pagination gap-2" style="--bs-pagination-border-radius:50px;">
+                <!-- Anterior -->
+                <li class="page-item {% if not cars.has_prev %}disabled{% endif %}">
+                    <a class="page-link px-4 py-2 fw-700 rounded-pill border-2"
+                       href="{{ url_for('public_cars', page=cars.prev_num) if cars.has_prev else '#' }}"
+                       style="border-color:var(--gray-light);color:var(--primary);font-weight:700;">
+                        <i class="fas fa-chevron-left me-1"></i> Anterior
+                    </a>
+                </li>
+
+                <!-- Números -->
+                {% for p in cars.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if p %}
+                        <li class="page-item {% if p == cars.page %}active{% endif %}">
+                            <a class="page-link px-3 py-2 rounded-pill border-0 fw-700"
+                               href="{{ url_for('public_cars', page=p) }}"
+                               style="{% if p == cars.page %}background:var(--grad-blue);color:white;{% else %}background:var(--light-bg);color:var(--text-dark);{% endif %}font-weight:700;">
+                                {{ p }}
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link border-0 bg-transparent text-muted">…</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Siguiente -->
+                <li class="page-item {% if not cars.has_next %}disabled{% endif %}">
+                    <a class="page-link px-4 py-2 fw-700 rounded-pill border-2"
+                       href="{{ url_for('public_cars', page=cars.next_num) if cars.has_next else '#' }}"
+                       style="border-color:var(--gray-light);color:var(--primary);font-weight:700;">
+                        Siguiente <i class="fas fa-chevron-right ms-1"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+
+        <!-- completely empty -->
+        <div class="empty-catalog" data-aos="fade-up">
+            <i class="fas fa-car-side"></i>
+            <h3>Colección en Preparación</h3>
+            <p>Nuestro equipo está seleccionando los vehículos más exclusivos para ti. Vuelve pronto.</p>
+            <a href="{{ url_for('home') }}" class="btn-primary-custom">
+                <i class="fas fa-home"></i> Volver al inicio
+            </a>
+        </div>
+
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput  = document.getElementById('searchInput');
+    const brandFilter  = document.getElementById('brandFilter');
+    const fuelFilter   = document.getElementById('fuelFilter');
+    const priceFilter  = document.getElementById('priceFilter');
+    const cards        = document.querySelectorAll('.car-col');
+    const noResultsMsg = document.getElementById('noResultsMsg');
+    const visibleCount = document.getElementById('visibleCount');
+
+    function applyFilters() {
+        const q     = searchInput.value.toLowerCase().trim();
+        const brand = brandFilter.value;
+        const fuel  = fuelFilter.value;
+        const price = priceFilter.value;
+
+        let visible = 0;
+
+        cards.forEach(card => {
+            const matchSearch = !q     || card.dataset.search.toLowerCase().includes(q);
+            const matchBrand  = !brand || card.dataset.brand === brand;
+            const matchFuel   = !fuel  || card.dataset.fuel  === fuel;
+
+            let matchPrice = true;
+            if (price) {
+                const [min, max] = price.split('-').map(Number);
+                const p = parseFloat(card.dataset.price);
+                matchPrice = p >= min && p <= max;
+            }
+
+            const show = matchSearch && matchBrand && matchFuel && matchPrice;
+            card.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+
+        if (visibleCount) visibleCount.textContent = visible;
+        if (noResultsMsg) noResultsMsg.style.display = visible === 0 ? 'block' : 'none';
+    }
+
+    function resetAll() {
+        searchInput.value  = '';
+        brandFilter.value  = '';
+        fuelFilter.value   = '';
+        priceFilter.value  = '';
+        applyFilters();
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+    brandFilter.addEventListener('change', applyFilters);
+    fuelFilter.addEventListener('change', applyFilters);
+    priceFilter.addEventListener('change', applyFilters);
+
+    document.getElementById('resetFilters').addEventListener('click', resetAll);
+    const r2 = document.getElementById('resetFilters2');
+    if (r2) r2.addEventListener('click', resetAll);
+});
+</script>
+{% endblock %}

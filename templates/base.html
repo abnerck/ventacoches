@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AutoVenta Premium{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <!-- AOS Animations -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        /* ── Variables ── */
+        :root {
+            --primary:      #0A4DAD;
+            --secondary:    #5FA8FF;
+            --accent:       #D4AF37;
+            --dark-bg:      #111827;
+            --light-bg:     #F8F9FA;
+            --gray-light:   #E5E7EB;
+            --text-dark:    #111827;
+            --text-light:   #FFFFFF;
+            --grad-blue:    linear-gradient(135deg, #0A4DAD 0%, #5FA8FF 100%);
+            --grad-dark:    linear-gradient(135deg, #111827 0%, #0A4DAD 100%);
+            --navbar-height: 62px;  /* altura real de la navbar */
+        }
+
+        /* ── Reset & Base ── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--light-bg);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--light-bg); }
+        ::-webkit-scrollbar-thumb { background: var(--grad-blue); border-radius: 4px; }
+
+        /* ─────────────────────────────
+           LOADING SCREEN
+        ───────────────────────────── */
+        .loading-screen {
+            position: fixed; inset: 0;
+            background: var(--dark-bg);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999;
+            transition: opacity .5s ease, visibility .5s ease;
+        }
+        .loading-screen.hidden { opacity: 0; visibility: hidden; }
+        .loader {
+            width: 60px; height: 60px;
+            border: 4px solid rgba(255,255,255,.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─────────────────────────────
+           NAVBAR
+        ───────────────────────────── */
+        .navbar {
+            background: rgba(255,255,255,.98) !important;
+            backdrop-filter: blur(10px);
+            padding: .5rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,.1);
+            transition: all .3s ease;
+            height: var(--navbar-height);
+        }
+        .navbar.scrolled {
+            padding: .3rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,.15);
+        }
+
+        /* Brand */
+        .navbar-brand {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.6rem;
+            letter-spacing: 2px;
+            color: var(--text-dark) !important;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+        .navbar-brand .brand-highlight { color: var(--primary); }
+        .navbar-brand small {
+            font-family: 'Outfit', sans-serif;
+            font-size: .6rem;
+            font-weight: 600;
+            color: #888;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            align-self: flex-end;
+            margin-bottom: 4px;
+        }
+
+        /* Nav links */
+        .nav-link {
+            font-weight: 600;
+            font-size: .9rem;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--text-dark) !important;
+            padding: .5rem .8rem !important;
+            margin: 0 .2rem;
+            position: relative;
+            transition: color .3s;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute; bottom: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 2px;
+            background: var(--grad-blue);
+            transition: width .3s;
+            border-radius: 4px;
+        }
+        .nav-link:hover,
+        .nav-link.active { color: var(--primary) !important; }
+        .nav-link:hover::after,
+        .nav-link.active::after { width: 80%; }
+
+        /* Toggler */
+        .navbar-toggler { border: none; padding: .4rem; }
+        .navbar-toggler:focus { box-shadow: none; }
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0,0,0,0.7)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        /* Admin dropdown */
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 8px 24px rgba(0,0,0,.12);
+            border-radius: 12px;
+            padding: .5rem;
+        }
+        .dropdown-item {
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: .9rem;
+            transition: background .2s;
+        }
+        .dropdown-item:hover { background: rgba(10,77,173,.08); color: var(--primary); }
+
+        /* Admin login btn */
+        .btn-nav-admin {
+            background: var(--grad-blue);
+            color: white !important;
+            border: none;
+            border-radius: 50px;
+            padding: .45rem 1.2rem;
+            font-size: .85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            transition: all .3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-nav-admin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(10,77,173,.35);
+            color: white !important;
+        }
+
+        @media (max-width: 768px) {
+            .navbar-collapse {
+                background: white;
+                padding: 1rem;
+                border-radius: 10px;
+                margin-top: 10px;
+                box-shadow: 0 5px 15px rgba(0,0,0,.1);
+            }
+            .nav-link { margin: .2rem 0; text-align: center; }
+            .nav-link::after { display: none; }
+        }
+
+        /* ─────────────────────────────
+           FLASH MESSAGES
+        ───────────────────────────── */
+        .flash-messages {
+            position: fixed;
+            top: calc(var(--navbar-height) + 14px); right: 20px;
+            z-index: 1050;
+            min-width: 300px;
+        }
+        .flash-messages .alert {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 6px 20px rgba(0,0,0,.12);
+            font-weight: 500;
+            font-size: .9rem;
+        }
+
+        /* ─────────────────────────────
+           HERO (default – overridable)
+        ───────────────────────────── */
+        .hero {
+            position: relative;
+            min-height: 75vh;
+            display: flex;
+            align-items: center;
+            background: var(--dark-bg);
+            overflow: hidden;
+            padding-top: var(--navbar-height);
+        }
+        .hero-bg {
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(10,77,173,.18) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(95,168,255,.15) 0%, transparent 50%),
+                linear-gradient(135deg, var(--dark-bg) 0%, #1A1A2E 100%);
+            z-index: 1;
+        }
+        .hero-shapes { position: absolute; inset: 0; overflow: hidden; z-index: 2; pointer-events: none; }
+        .shape { position: absolute; opacity: .08; }
+        .shape-1 {
+            width: 320px; height: 320px;
+            background: var(--grad-blue);
+            border-radius: 50%;
+            top: 8%; right: 8%;
+            animation: float 8s ease-in-out infinite;
+        }
+        .shape-2 {
+            width: 200px; height: 200px;
+            background: var(--grad-dark);
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            bottom: 18%; left: 4%;
+            animation: float 6s ease-in-out infinite reverse;
+        }
+        .shape-3 {
+            width: 150px; height: 150px;
+            border: 3px solid var(--secondary);
+            border-radius: 50%;
+            top: 55%; right: 28%;
+            animation: rotate 22s linear infinite;
+        }
+        @keyframes float {
+            0%,100% { transform: translateY(0) rotate(0deg); }
+            50%      { transform: translateY(-20px) rotate(180deg); }
+        }
+        @keyframes rotate { to { transform: rotate(360deg); } }
+
+        .hero-content { position: relative; z-index: 3; }
+        .hero h1 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: clamp(2.4rem, 7vw, 5rem);
+            line-height: 1.05;
+            color: var(--text-light);
+            letter-spacing: 1.5px;
+            margin-bottom: 1.2rem;
+        }
+        .hero h1 .gradient-text {
+            background: var(--grad-blue);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p.lead {
+            color: rgba(255,255,255,.82);
+            font-size: clamp(.95rem, 2vw, 1.15rem);
+            font-weight: 300;
+            max-width: 600px;
+        }
+
+        /* ─────────────────────────────
+           SECTION BASE
+        ───────────────────────────── */
+        .section-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: clamp(2rem, 5vw, 3rem);
+            letter-spacing: 1.5px;
+            position: relative;
+            display: inline-block;
+            margin-bottom: .8rem;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px; left: 0;
+            width: 80px; height: 4px;
+            background: var(--grad-blue);
+            border-radius: 8px;
+        }
+        .section-title.light { color: var(--text-light); }
+        .section-title.dark  { color: var(--text-dark);  }
+        .section-subtitle {
+            font-size: clamp(.9rem, 1.8vw, 1.05rem);
+            color: #666;
+            margin-bottom: 3rem;
+            line-height: 1.6;
+        }
+        .section-subtitle.light { color: rgba(255,255,255,.8); }
+
+        /* ─────────────────────────────
+           CARDS (car-card)
+        ───────────────────────────── */
+        .car-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 2px solid var(--gray-light);
+            box-shadow: 0 4px 15px rgba(0,0,0,.06);
+            transition: all .35s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .car-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 18px 40px rgba(10,77,173,.14);
+            border-color: var(--primary);
+        }
+        .car-img {
+            height: 210px;
+            object-fit: cover;
+            width: 100%;
+        }
+        .car-card .card-body {
+            padding: 1.4rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .car-card .card-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.4rem;
+            letter-spacing: 1px;
+            color: var(--text-dark);
+        }
+        .car-card .price-badge {
+            display: inline-block;
+            background: var(--grad-blue);
+            color: white;
+            font-weight: 700;
+            font-size: .95rem;
+            border-radius: 50px;
+            padding: 4px 14px;
+            margin-bottom: .5rem;
+        }
+
+        /* ─────────────────────────────
+           BUTTONS
+        ───────────────────────────── */
+        .btn-primary-custom {
+            background: var(--grad-blue);
+            border: none;
+            padding: 12px 28px;
+            font-weight: 700;
+            font-size: .92rem;
+            border-radius: 50px;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all .3s ease;
+            box-shadow: 0 5px 15px rgba(10,77,173,.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        .btn-primary-custom:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(10,77,173,.42);
+            color: white;
+        }
+        .btn-outline-custom {
+            border: 2px solid var(--secondary);
+            background: transparent;
+            padding: 11px 28px;
+            font-weight: 700;
+            font-size: .92rem;
+            border-radius: 50px;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all .3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        .btn-outline-custom:hover {
+            background: var(--grad-blue);
+            border-color: transparent;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(10,77,173,.4);
+        }
+
+        /* ─────────────────────────────
+           STATS STRIP
+        ───────────────────────────── */
+        .stats-section {
+            background: var(--grad-blue);
+            padding: 55px 0;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-item { text-align: center; position: relative; z-index: 1; }
+        .stat-number {
+            font-family: 'Bebas Neue', cursive;
+            font-size: clamp(2.2rem, 5vw, 3.2rem);
+            line-height: 1;
+            display: block;
+            margin-bottom: .3rem;
+        }
+        .stat-label {
+            font-size: .85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            opacity: .9;
+        }
+
+        /* ─────────────────────────────
+           DARK SECTION
+        ───────────────────────────── */
+        .section-dark {
+            background: var(--dark-bg);
+            padding: 80px 0;
+        }
+        .section-dark .section-subtitle { color: rgba(255,255,255,.75); }
+
+        /* ─────────────────────────────
+           FOOTER
+        ───────────────────────────── */
+        footer.site-footer {
+            background: var(--dark-bg);
+            color: rgba(255,255,255,.7);
+            padding: 50px 0 28px;
+            border-top: 3px solid var(--primary);
+        }
+        footer.site-footer h5 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.3rem;
+            letter-spacing: 1.2px;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+        }
+        footer.site-footer .brand-footer {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            color: white;
+        }
+        footer.site-footer .brand-footer span { color: var(--secondary); }
+        footer.site-footer p { font-size: .9rem; opacity: .8; line-height: 1.6; }
+        footer.site-footer a { color: rgba(255,255,255,.7); text-decoration: none; transition: color .25s; }
+        footer.site-footer a:hover { color: var(--secondary); }
+        footer.site-footer .footer-icon { color: var(--secondary); margin-right: 6px; }
+        footer.site-footer .footer-divider {
+            border-color: rgba(95,168,255,.2);
+            margin: 1.6rem 0;
+        }
+        footer.site-footer .footer-bottom { font-size: .8rem; opacity: .6; }
+        footer.site-footer .social-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px; height: 40px;
+            background: rgba(255,255,255,.1);
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            transition: all .3s;
+            margin-right: 8px;
+            text-decoration: none;
+        }
+        footer.site-footer .social-link:hover {
+            background: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        /* ─────────────────────────────
+           FORM CONTROLS
+        ───────────────────────────── */
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid var(--gray-light);
+            padding: 10px 14px;
+            font-size: .95rem;
+            transition: border-color .25s, box-shadow .25s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 .2rem rgba(10,77,173,.18);
+        }
+
+        /* ─────────────────────────────
+           ADMIN TABLE
+        ───────────────────────────── */
+        .admin-table {
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 4px 18px rgba(0,0,0,.07);
+        }
+        .admin-table thead th {
+            background: var(--grad-blue);
+            color: white;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            border: none;
+            padding: 14px 16px;
+        }
+        .admin-table tbody tr { transition: background .2s; }
+        .admin-table tbody tr:hover { background: rgba(10,77,173,.04); }
+        .admin-table td { vertical-align: middle; padding: 12px 16px; border-color: var(--gray-light); }
+
+        /* ─────────────────────────────
+           BADGES
+        ───────────────────────────── */
+        .badge-blue {
+            background: rgba(10,77,173,.12);
+            color: var(--primary);
+            border-radius: 50px;
+            padding: 4px 12px;
+            font-size: .8rem;
+            font-weight: 700;
+        }
+
+        /* ─────────────────────────────
+           MISC UTILITIES
+        ───────────────────────────── */
+        .gradient-text {
+            background: var(--grad-blue);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        @keyframes pulse {
+            0%,100% { transform: scale(1); }
+            50%      { transform: scale(1.05); }
+        }
+        @media (max-width: 768px) {
+            .section-dark, .stats-section { padding: 55px 0; }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loader"></div>
+    </div>
+
+    <!-- ── Navbar ── -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+
+            <a class="navbar-brand" href="{{ url_for('home') }}">
+                <span class="brand-highlight">AUTO</span>VENTA
+                <small>Premium</small>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('home') }}">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('public_cars') }}">Coches en Venta</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('gestoria') }}">Gestoria Nacional</a>
+                    </li>
+
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <li class="nav-item dropdown ms-2">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-1"
+                           href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-gear"></i> Admin
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">
+                                <i class="fas fa-gauge-high me-2 text-primary"></i>Dashboard</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_cars') }}">
+                                <i class="fas fa-car me-2 text-primary"></i>Gestionar Coches</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('add_car') }}">
+                                <i class="fas fa-plus me-2 text-primary"></i>Añadir Coche</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                <i class="fas fa-right-from-bracket me-2"></i>Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+
+                    {% elif not current_user.is_authenticated %}
+                    <li class="nav-item ms-2">
+                        <a class="btn-nav-admin" href="{{ url_for('login') }}">
+                            <i class="fas fa-lock"></i> Admin
+                        </a>
+                    </li>
+
+                    {% else %}
+                    <li class="nav-item ms-2">
+                        <a class="btn-nav-admin" href="{{ url_for('logout') }}">
+                            <i class="fas fa-right-from-bracket"></i> Salir
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ── Flash Messages ── -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- ── Main Content ── -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ── Footer ── -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="row g-4">
+
+                <!-- Branding -->
+                <div class="col-md-4">
+                    <p class="brand-footer mb-2"><span>AUTO</span>VENTA PREMIUM</p>
+                    <p>Especialistas en vehículos de alta gama desde 2010. Excelencia, confianza y exclusividad.</p>
+                    <div class="mt-3">
+                        <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+
+                <!-- Links -->
+                <div class="col-md-2">
+                    <h5>Navegación</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-1"><a href="{{ url_for('home') }}">Inicio</a></li>
+                        <li class="mb-1"><a href="{{ url_for('public_cars') }}">Coches en Venta</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contacto -->
+                <div class="col-md-3">
+                    <h5>Contacto</h5>
+                    <p class="mb-1"><i class="fas fa-location-dot footer-icon"></i> Av. del Lujo, 123 — Madrid</p>
+                    <p class="mb-1"><i class="fas fa-phone footer-icon"></i> +34 910 000 000</p>
+                    <p class="mb-0"><i class="fas fa-envelope footer-icon"></i> info@autoventapremium.com</p>
+                </div>
+
+                <!-- Horario -->
+                <div class="col-md-3">
+                    <h5>Horario</h5>
+                    <p class="mb-1">Lun – Vie: 9:00 – 20:00</p>
+                    <p class="mb-1">Sábados: 10:00 – 14:00</p>
+                    <p class="mb-0">Domingos: Cerrado</p>
+                </div>
+            </div>
+
+            <hr class="footer-divider">
+
+            <div class="row footer-bottom">
+                <div class="col-md-6 text-center text-md-start mb-2 mb-md-0">
+                    <p class="mb-0">&copy; 2024 AutoVenta Premium. Todos los derechos reservados.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="#">Privacidad</a> &nbsp;|&nbsp; <a href="#">Términos</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 600, once: true, offset: 50 });
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+            }, 500);
+        });
+
+        window.addEventListener('scroll', () => {
+            document.querySelector('.navbar').classList.toggle('scrolled', window.scrollY > 30);
+        });
+
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                const collapse = document.querySelector('.navbar-collapse');
+                if (collapse.classList.contains('show')) {
+                    document.querySelector('.navbar-toggler').click();
+                }
+            });
+        });
+
+        window.addEventListener('scroll', () => {
+            if (window.innerWidth > 768) {
+                document.querySelectorAll('.shape').forEach((s, i) => {
+                    s.style.transform = `translateY(${window.pageYOffset * (i + 1) * 0.25}px)`;
+                });
+            }
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

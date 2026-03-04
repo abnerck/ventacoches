@@ -1,0 +1,568 @@
+{% extends "base.html" %}
+
+{% block title %}{{ car.marca }} {{ car.modelo }} - AutoVenta Premium{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── PAGE WRAPPER ── */
+    .detail-page {
+        background: var(--light-bg);
+        padding-top: 88px;
+        padding-bottom: 60px;
+        min-height: 100vh;
+    }
+
+    /* ── BREADCRUMB ── */
+    .breadcrumb-wrap {
+        background: var(--dark-bg);
+        padding: 14px 0;
+        border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .breadcrumb {
+        margin: 0;
+        background: transparent;
+    }
+    .breadcrumb-item a {
+        color: var(--secondary);
+        text-decoration: none;
+        font-size: .85rem;
+        font-weight: 600;
+        transition: color .2s;
+    }
+    .breadcrumb-item a:hover { color: white; }
+    .breadcrumb-item.active { color: rgba(255,255,255,.5); font-size: .85rem; }
+    .breadcrumb-item + .breadcrumb-item::before { color: rgba(255,255,255,.25); }
+
+    /* ── GALLERY ── */
+    .gallery-wrap {
+        border-radius: 18px;
+        overflow: hidden;
+        background: white;
+        border: 2px solid var(--gray-light);
+        box-shadow: 0 6px 24px rgba(0,0,0,.07);
+        margin-bottom: 1.5rem;
+    }
+    .main-image-wrap {
+        position: relative;
+        height: 460px;
+        background: linear-gradient(135deg, #1a1a2e, #0A4DAD);
+        overflow: hidden;
+    }
+    .main-image-wrap img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        transition: transform .4s ease;
+    }
+    .main-image-wrap:hover img { transform: scale(1.03); }
+
+    /* nav arrows */
+    .gallery-nav {
+        position: absolute;
+        top: 50%; transform: translateY(-50%);
+        background: rgba(0,0,0,.45);
+        border: none;
+        color: white;
+        width: 42px; height: 42px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all .25s;
+        z-index: 5;
+        backdrop-filter: blur(4px);
+    }
+    .gallery-nav:hover { background: var(--primary); transform: translateY(-50%) scale(1.1); }
+    .gallery-nav.prev { left: 14px; }
+    .gallery-nav.next { right: 14px; }
+
+    /* no-photo placeholder */
+    .no-photo {
+        width: 100%; height: 460px;
+        background: linear-gradient(135deg, #1a1a2e, #0A4DAD);
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        color: rgba(255,255,255,.25);
+        font-size: 4rem;
+        gap: 1rem;
+    }
+    .no-photo p { font-size: 1rem; font-family: 'Outfit', sans-serif; }
+
+    /* thumbnails */
+    .thumb-row {
+        display: flex;
+        gap: 8px;
+        padding: 10px 12px;
+        overflow-x: auto;
+        background: #f9f9f9;
+        border-top: 1px solid var(--gray-light);
+    }
+    .thumb-row::-webkit-scrollbar { height: 4px; }
+    .thumb-row::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 4px; }
+
+    .thumb {
+        width: 88px; height: 66px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2.5px solid transparent;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: all .25s;
+        opacity: .7;
+    }
+    .thumb:hover { opacity: 1; transform: translateY(-2px); }
+    .thumb.active {
+        border-color: var(--primary);
+        opacity: 1;
+        box-shadow: 0 4px 12px rgba(10,77,173,.25);
+    }
+
+    /* ── DESCRIPTION CARD ── */
+    .desc-card {
+        background: white;
+        border-radius: 18px;
+        border: 2px solid var(--gray-light);
+        box-shadow: 0 4px 16px rgba(0,0,0,.05);
+        overflow: hidden;
+    }
+    .desc-card-header {
+        background: var(--grad-blue);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .desc-card-header h4 {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 1.5rem;
+        letter-spacing: 1px;
+        color: white;
+        margin: 0;
+    }
+    .desc-card-header i { color: rgba(255,255,255,.8); font-size: 1.1rem; }
+    .desc-card-body {
+        padding: 1.5rem;
+        color: #555;
+        line-height: 1.75;
+        font-size: 1rem;
+    }
+    .desc-card-body .no-desc {
+        color: #aaa;
+        font-style: italic;
+    }
+
+    /* ── SIDEBAR CARD ── */
+    .sidebar-card {
+        background: white;
+        border-radius: 18px;
+        border: 2px solid var(--gray-light);
+        box-shadow: 0 6px 24px rgba(0,0,0,.07);
+        overflow: hidden;
+        position: sticky;
+        top: 90px;
+    }
+    .sidebar-header {
+        background: var(--dark-bg);
+        padding: 1.4rem 1.6rem;
+        position: relative;
+    }
+    .sidebar-header::after {
+        content: '';
+        position: absolute; bottom: 0; left: 0; right: 0;
+        height: 3px;
+        background: var(--grad-blue);
+    }
+    .sidebar-header .car-name {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 1.9rem;
+        letter-spacing: 1.5px;
+        color: white;
+        line-height: 1.1;
+        margin: 0;
+    }
+    .sidebar-header .car-year {
+        font-size: .82rem;
+        color: var(--secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: .3rem;
+    }
+
+    /* status badge */
+    .status-dot {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: .8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        padding: 4px 12px;
+        border-radius: 50px;
+        margin-top: .5rem;
+    }
+    .status-dot.available  { background: rgba(34,197,94,.12); color: #16a34a; }
+    .status-dot.unavailable{ background: rgba(156,163,175,.15); color: #6b7280; }
+    .status-dot i { font-size: .65rem; }
+
+    .sidebar-body { padding: 1.4rem; }
+
+    /* price */
+    .car-price-big {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 2.8rem;
+        letter-spacing: 1px;
+        background: var(--grad-blue);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1;
+        margin-bottom: 1.4rem;
+        display: block;
+    }
+
+    /* specs grid */
+    .specs-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 1.4rem;
+    }
+    .spec-tile {
+        background: var(--light-bg);
+        border-radius: 12px;
+        padding: .9rem .8rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1.5px solid var(--gray-light);
+        transition: border-color .25s;
+    }
+    .spec-tile:hover { border-color: var(--secondary); }
+    .spec-tile-icon {
+        width: 38px; height: 38px;
+        background: var(--grad-blue);
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        color: white;
+        font-size: .95rem;
+        flex-shrink: 0;
+    }
+    .spec-tile-text .label {
+        font-size: .72rem;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: .7px;
+        display: block;
+        margin-bottom: .1rem;
+    }
+    .spec-tile-text .value {
+        font-size: .97rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        display: block;
+    }
+
+    /* unavailable alert */
+    .unavailable-alert {
+        background: rgba(251,191,36,.08);
+        border: 1px solid rgba(251,191,36,.3);
+        border-radius: 12px;
+        padding: .9rem 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 1.2rem;
+        font-size: .9rem;
+        color: #92400e;
+    }
+    .unavailable-alert i { color: #f59e0b; font-size: 1.1rem; }
+
+    /* action buttons */
+    .action-btn {
+        width: 100%;
+        padding: 13px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: .92rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all .3s;
+        text-decoration: none;
+        margin-bottom: .7rem;
+    }
+    .action-btn.whatsapp {
+        background: linear-gradient(135deg, #25D366, #128C7E);
+        color: white;
+        box-shadow: 0 5px 15px rgba(37,211,102,.3);
+    }
+    .action-btn.whatsapp:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(37,211,102,.4);
+        color: white;
+    }
+    .action-btn.info {
+        background: var(--grad-blue);
+        color: white;
+        box-shadow: 0 5px 15px rgba(10,77,173,.3);
+    }
+    .action-btn.info:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(10,77,173,.42);
+        color: white;
+    }
+    .action-btn.back {
+        background: transparent;
+        border: 2px solid var(--gray-light);
+        color: #666;
+    }
+    .action-btn.back:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    /* divider */
+    .sidebar-divider {
+        border: none;
+        border-top: 1px solid var(--gray-light);
+        margin: 1.2rem 0;
+    }
+
+    @media (max-width: 991px) {
+        .main-image-wrap { height: 300px; }
+        .no-photo        { height: 300px; }
+        .sidebar-card    { position: static; margin-top: 1.5rem; }
+    }
+    @media (max-width: 576px) {
+        .specs-grid { grid-template-columns: 1fr 1fr; }
+        .detail-page { padding-top: 72px; }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- ── BREADCRUMB ── -->
+<div class="breadcrumb-wrap">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('home') }}"><i class="fas fa-house me-1"></i>Inicio</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('public_cars') }}">Colección</a>
+                </li>
+                <li class="breadcrumb-item active">{{ car.marca }} {{ car.modelo }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+
+<!-- ── MAIN CONTENT ── -->
+<div class="detail-page">
+    <div class="container">
+        <div class="row g-4">
+
+            <!-- ══ LEFT: Gallery + Description ══ -->
+            <div class="col-lg-8" data-aos="fade-right">
+
+                <!-- Gallery -->
+                <div class="gallery-wrap">
+                    {% if car.photos_urls %}
+                    <div class="main-image-wrap">
+                        <img id="mainImage"
+                             src="{{ car.primary_photo_url or car.photos_urls[0] }}"
+                             alt="{{ car.marca }} {{ car.modelo }}">
+
+                        {% if car.photos_urls|length > 1 %}
+                        <button class="gallery-nav prev" onclick="navigate(-1)">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="gallery-nav next" onclick="navigate(1)">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+
+                    {% if car.photos_urls|length > 1 %}
+                    <div class="thumb-row">
+                        {% for photo_url in car.photos_urls %}
+                        <img src="{{ photo_url }}"
+                             class="thumb {% if loop.first %}active{% endif %}"
+                             alt="Foto {{ loop.index }}"
+                             onclick="changeMainImage('{{ photo_url }}', this)">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% else %}
+                    <div class="no-photo">
+                        <i class="fas fa-car-side"></i>
+                        <p>Imágenes no disponibles</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Description -->
+                <div class="desc-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="desc-card-header">
+                        <i class="fas fa-file-lines"></i>
+                        <h4>Descripción del Vehículo</h4>
+                    </div>
+                    <div class="desc-card-body">
+                        {% if car.descripcion %}
+                        {{ car.descripcion }}
+                        {% else %}
+                        <p class="no-desc">No hay descripción disponible para este vehículo.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- ══ RIGHT: Sidebar ══ -->
+            <div class="col-lg-4" data-aos="fade-left">
+                <div class="sidebar-card">
+
+                    <!-- Header -->
+                    <div class="sidebar-header">
+                        <p class="car-name">{{ car.marca }}<br>{{ car.modelo }}</p>
+                        <p class="car-year">Año {{ car.año }}</p>
+                        {% if car.activo %}
+                        <span class="status-dot available">
+                            <i class="fas fa-circle"></i> Disponible
+                        </span>
+                        {% else %}
+                        <span class="status-dot unavailable">
+                            <i class="fas fa-circle"></i> No disponible
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="sidebar-body">
+
+                        <!-- Price -->
+                        <span class="car-price-big">{{ "{:,.0f}".format(car.precio) }} €</span>
+
+                        <!-- Specs -->
+                        <div class="specs-grid">
+                            <div class="spec-tile">
+                                <div class="spec-tile-icon"><i class="fas fa-calendar-alt"></i></div>
+                                <div class="spec-tile-text">
+                                    <span class="label">Año</span>
+                                    <span class="value">{{ car.año }}</span>
+                                </div>
+                            </div>
+                            <div class="spec-tile">
+                                <div class="spec-tile-icon"><i class="fas fa-tachometer-alt"></i></div>
+                                <div class="spec-tile-text">
+                                    <span class="label">Kilometraje</span>
+                                    <span class="value">
+                                        {% if car.kilometraje %}{{ "{:,.0f}".format(car.kilometraje) }} km{% else %}N/A{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="spec-tile">
+                                <div class="spec-tile-icon"><i class="fas fa-gas-pump"></i></div>
+                                <div class="spec-tile-text">
+                                    <span class="label">Combustible</span>
+                                    <span class="value">
+                                        {% if car.tipo_combustible == 'gasolina' %}Gasolina
+                                        {% elif car.tipo_combustible == 'diesel' %}Diésel
+                                        {% elif car.tipo_combustible == 'hibrido' %}Híbrido
+                                        {% elif car.tipo_combustible == 'electrico' %}⚡ Eléct.
+                                        {% else %}{{ car.tipo_combustible }}{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="spec-tile">
+                                <div class="spec-tile-icon"><i class="fas fa-shield-halved"></i></div>
+                                <div class="spec-tile-text">
+                                    <span class="label">Estado</span>
+                                    <span class="value">
+                                        {% if car.activo %}✅ Activo{% else %}⛔ Inactivo{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Unavailable warning -->
+                        {% if not car.activo %}
+                        <div class="unavailable-alert">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            Este vehículo no está disponible actualmente.
+                        </div>
+                        {% endif %}
+
+                        <hr class="sidebar-divider">
+
+                        <!-- Actions -->
+                        <a href="https://wa.me/34910000000?text=Hola, me interesa el {{ car.marca }} {{ car.modelo }} ({{ car.año }})"
+                           target="_blank"
+                           class="action-btn whatsapp">
+                            <i class="fab fa-whatsapp"></i> Contactar por WhatsApp
+                        </a>
+
+                        <button class="action-btn info" onclick="document.querySelector('footer').scrollIntoView({behavior:'smooth'})">
+                            <i class="fas fa-phone"></i> Solicitar Información
+                        </button>
+
+                        <a href="{{ url_for('public_cars') }}" class="action-btn back">
+                            <i class="fas fa-arrow-left"></i> Volver a la Colección
+                        </a>
+
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /row -->
+    </div><!-- /container -->
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    // ── Gallery logic ──
+    const photos = [
+        {% if car.photos_urls %}
+            {% for url in car.photos_urls %}"{{ url }}"{% if not loop.last %},{% endif %}{% endfor %}
+        {% endif %}
+    ];
+    let currentIndex = 0;
+
+    function setPhoto(index) {
+        if (!photos.length) return;
+        currentIndex = (index + photos.length) % photos.length;
+        document.getElementById('mainImage').src = photos[currentIndex];
+        document.querySelectorAll('.thumb').forEach((t, i) => {
+            t.classList.toggle('active', i === currentIndex);
+        });
+    }
+
+    function changeMainImage(src, el) {
+        currentIndex = photos.indexOf(src);
+        document.getElementById('mainImage').src = src;
+        document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function navigate(dir) { setPhoto(currentIndex + dir); }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft')  navigate(-1);
+        if (e.key === 'ArrowRight') navigate(1);
+    });
+</script>
+{% endblock %}
