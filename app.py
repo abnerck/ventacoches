@@ -399,10 +399,139 @@ def forbidden(e):
 def internal_server_error(e):
     return render_template('errors/500.html'), 500
 
+# ============================================
+# API REST - Para React Native
+# ============================================
+from flask_cors import CORS
+from flask import jsonify
+CORS(app)
+
+def car_to_dict(car):
+    """Convierte un objeto Car a diccionario JSON"""
+    primary_photo = next((p for p in car.fotos if p.is_primary), car.fotos[0] if car.fotos else None)
+    return {
+        'id': car.id,
+        'marca': car.marca,
+        'modelo': car.modelo,
+        'año': car.año,
+        'precio': car.precio,
+        'kilometraje': car.kilometraje,
+        'tipo_combustible': car.tipo_combustible,
+        'descripcion': car.descripcion,
+        'activo': car.activo,
+        'fecha_creacion': car.fecha_creacion.isoformat() if car.fecha_creacion else None,
+        'foto_principal': get_photo_url(car.id, primary_photo.filename) if primary_photo else None,
+        'total_fotos': len(car.fotos)
+    }
+
+@app.route("/api/login", methods=['POST'])
+def api_login():
+    data = request.get_json()
+    if not data or not data.get('username') or not data.get('password'):
+        return jsonify({'error': 'Faltan credenciales'}), 400
+    
+    user = User.query.filter_by(username=data['username']).first()
+    if user and check_password_hash(user.password_hash, data['password']):
+        return jsonify({
+            'success': True,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'is_admin': user.is_admin
+            }
+        })
+    return jsonify({'error': 'Usuario o contraseña incorrectos'}), 401
+
+@app.route("/api/coches", methods=['GET'])
+def api_coches():
+    solo_activos = request.args.get('activos', 'true').lower() == 'true'
+    query = Car.query
+    if solo_activos:
+        query = query.filter_by(activo=True)
+    cars = query.order_by(Car.fecha_creacion.desc()).all()
+    return jsonify([car_to_dict(car) for car in cars])
+
+@app.route("/api/coche/<int:id>", methods=['GET'])
+def api_coche_detalle(id):
+    car = Car.query.get_or_404(id)
+    data = car_to_dict(car)
+    data['fotos'] = [get_photo_url(car.id, p.filename) for p in car.fotos]
+    return jsonify(data)
+
+@app.route("/api/dashboard", methods=['GET'])
+def api_dashboard():
+    return jsonify({
+        'total_coches': Car.query.count(),
+        'coches_activos': Car.query.filter_by(activo=True).count(),
+        'coches_inactivos': Car.query.filter_by(activo=False).count(),
+    })
+
+
+@app.route("/api/coche/nuevo", methods=['POST'])
+def api_nuevo_coche():
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No se enviaron datos'}), 400
+    car = Car(
+        marca=data.get('marca'),
+        modelo=data.get('modelo'),
+        año=data.get('año'),
+        precio=data.get('precio'),
+        kilometraje=data.get('kilometraje', 0),
+        tipo_combustible=data.get('tipo_combustible', 'gasolina'),
+        descripcion=data.get('descripcion', '')
+    )
+    db.session.add(car)
+    db.session.commit()
+    return jsonify({'success': True, 'id': car.id})
+
+@app.route("/api/coche/editar/<int:id>", methods=['PUT'])
+def api_editar_coche(id):
+    car = Car.query.get_or_404(id)
+    data = request.get_json()
+    car.marca = data.get('marca', car.marca)
+    car.modelo = data.get('modelo', car.modelo)
+    car.año = data.get('año', car.año)
+    car.precio = data.get('precio', car.precio)
+    car.kilometraje = data.get('kilometraje', car.kilometraje)
+    car.tipo_combustible = data.get('tipo_combustible', car.tipo_combustible)
+    car.descripcion = data.get('descripcion', car.descripcion)
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route("/api/coche/eliminar/<int:id>", methods=['DELETE'])
+def api_eliminar_coche(id):
+    car = Car.query.get_or_404(id)
+    car.activo = not car.activo
+    db.session.commit()
+    return jsonify({'success': True, 'activo': car.activo})
+
+@app.route("/api/coche/<int:id>/fotos", methods=['GET'])
+def api_fotos_coche(id):
+    car = Car.query.get_or_404(id)
+    fotos = [{
+        'id': p.id,
+        'url': get_photo_url(car.id, p.filename),
+        'is_primary': p.is_primary
+    } for p in car.fotos]
+    return jsonify(fotos)
+
+@app.route("/api/coche/<int:id>/subir-foto", methods=['POST'])
+def api_subir_foto(id):
+    car = Car.query.get_or_404(id)
+    if 'foto' not in request.files:
+        return jsonify({'error': 'No se envió foto'}), 400
+    file = request.files['foto']
+    if file and allowed_file(file.filename):
+        saved = save_car_photos(car.id, [file])
+        if saved:
+            return jsonify({'success': True})
+    return jsonify({'error': 'Archivo no válido'}), 400
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
         create_admin_user()
         # Crear carpeta de uploads si no existe
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

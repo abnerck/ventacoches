@@ -6,3 +6,4 @@ WTForms==3.0.1
 python-dotenv==1.0.0
 werkzeug==2.3.7
 Flask-Uploads==0.2.1
+flask-cors==4.0.0
