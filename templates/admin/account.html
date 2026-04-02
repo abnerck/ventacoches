@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Mi cuenta - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-page { background: var(--light-bg); min-height: 100vh; padding-top: 90px; padding-bottom: 60px; }
+    .page-header {
+        background: var(--dark-bg);
+        padding: calc(var(--navbar-height) + 1.25rem) 0 1.5rem;
+        margin-bottom: 2rem;
+        border-bottom: 3px solid var(--primary);
+        position: relative;
+        overflow: visible;
+    }
+    .page-header::before {
+        content: ''; position: absolute; inset: 0;
+        background: radial-gradient(circle at 80% 50%, rgba(10,77,173,.2) 0%, transparent 60%);
+        pointer-events: none;
+    }
+    .page-header .page-title {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 2rem;
+        letter-spacing: 2px;
+        color: white;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .page-header .page-title i { color: var(--secondary); }
+    .page-header .page-subtitle { color: rgba(255,255,255,.5); font-size: .85rem; margin: .35rem 0 0; }
+
+    .summary-card {
+        background: white;
+        border-radius: 16px;
+        border: 2px solid var(--gray-light);
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.75rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,.05);
+    }
+    .summary-card .label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: #999; }
+    .summary-card .value { font-size: 1.05rem; font-weight: 700; color: var(--text-dark); margin-top: .2rem; word-break: break-all; }
+    .summary-card .hint { font-size: .82rem; color: #888; margin-top: .75rem; line-height: 1.5; }
+
+    .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+    .settings-card {
+        background: white;
+        border-radius: 18px;
+        border: 2px solid var(--gray-light);
+        overflow: hidden;
+        box-shadow: 0 4px 18px rgba(0,0,0,.06);
+        display: flex;
+        flex-direction: column;
+    }
+    .settings-card-header {
+        background: var(--grad-blue);
+        padding: 1rem 1.35rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .settings-card-header h2 {
+        font-family: 'Bebas Neue', cursive;
+        font-size: 1.35rem;
+        letter-spacing: 1px;
+        color: white;
+        margin: 0;
+    }
+    .settings-card-header i { color: rgba(255,255,255,.85); font-size: 1.1rem; }
+    .settings-card-body { padding: 1.5rem; flex: 1; display: flex; flex-direction: column; }
+    .settings-card-body .form-label {
+        font-weight: 600;
+        font-size: .78rem;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+        color: #555;
+        margin-bottom: .35rem;
+    }
+    .settings-card-body .form-control, .settings-card-body .form-select {
+        border-radius: 10px;
+        border: 2px solid var(--gray-light);
+        padding: 10px 14px;
+        font-size: .92rem;
+        background: #fafafa;
+    }
+    .settings-card-body .form-control:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 .2rem rgba(10,77,173,.12);
+        background: white;
+    }
+    .field-error {
+        color: #ef4444;
+        font-size: .76rem;
+        margin-top: .3rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .btn-save {
+        margin-top: auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: var(--grad-blue);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 11px 22px;
+        font-weight: 700;
+        font-size: .85rem;
+        text-transform: uppercase;
+        letter-spacing: .7px;
+        transition: all .25s;
+        box-shadow: 0 5px 16px rgba(10,77,173,.28);
+    }
+    .btn-save:hover { color: white; transform: translateY(-2px); box-shadow: 0 10px 24px rgba(10,77,173,.4); }
+    .btn-back-outline {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255,255,255,.1);
+        border: 1.5px solid rgba(255,255,255,.2);
+        color: rgba(255,255,255,.9);
+        border-radius: 50px;
+        padding: 9px 18px;
+        font-size: .85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all .25s;
+    }
+    .btn-back-outline:hover { background: rgba(255,255,255,.18); color: white; }
+    @media (max-width: 768px) {
+        .admin-page { padding-top: 72px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div class="container d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">
+                <i class="fas fa-user-gear"></i> Mi cuenta
+            </h1>
+            <p class="page-subtitle">Cambia tu contraseña, usuario o correo (siempre pide la contraseña actual).</p>
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn-back-outline">
+            <i class="fas fa-arrow-left"></i> Panel
+        </a>
+    </div>
+</div>
+
+<div class="admin-page">
+    <div class="container" style="max-width: 1100px;">
+
+        <div class="summary-card" data-aos="fade-up">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="label">Usuario actual</div>
+                    <div class="value">{{ user.username }}</div>
+                </div>
+                <div class="col-md-8">
+                    <div class="label">Correo registrado</div>
+                    <div class="value">{% if user.email %}{{ user.email }}{% else %}<span style="color:#aaa;font-weight:500;">No has añadido correo aún</span>{% endif %}</div>
+                </div>
+            </div>
+            <p class="hint mb-0">
+                <i class="fas fa-shield-halved me-1 text-primary"></i>
+                El correo sirve como contacto en tu ficha; el acceso al panel sigue siendo con <strong>usuario y contraseña</strong>.
+                (Recuperación de contraseña por e-mail se puede añadir después con servidor de correo.)
+            </p>
+        </div>
+
+        <div class="settings-grid">
+
+            <!-- Contraseña -->
+            <div class="settings-card" data-aos="fade-up">
+                <div class="settings-card-header">
+                    <i class="fas fa-key"></i>
+                    <h2>Cambiar contraseña</h2>
+                </div>
+                <div class="settings-card-body">
+                    <form method="POST" action="{{ url_for('admin_account') }}" novalidate>
+                        <input type="hidden" name="form_id" value="password">
+                        {{ pw_form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ pw_form.current_password.label(class="form-label") }}
+                            {{ pw_form.current_password(class="form-control", autocomplete="current-password") }}
+                            {% for e in pw_form.current_password.errors %}<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>{% endfor %}
+                        </div>
+                        <div class="mb-3">
+                            {{ pw_form.new_password.label(class="form-label") }}
+                            {{ pw_form.new_password(class="form-control", autocomplete="new-password") }}
+                            {% for e in pw_form.new_password.errors %}<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>{% endfor %}
+                        </div>
+                        <div class="mb-4">
+                            {{ pw_form.new_password2.label(class="form-label") }}
+                            {{ pw_form.new_password2(class="form-control", autocomplete="new-password") }}
+                            {% for e in pw_form.new_password2.errors %}<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>{% endfor %}
+                        </div>
+                        <button type="submit" class="btn-save w-100">{{ pw_form.submit.label.text }}</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Usuario -->
+            <div class="settings-card" data-aos="fade-up" data-aos-delay="50">
+                <div class="settings-card-header">
+                    <i class="fas fa-signature"></i>
+                    <h2>Cambiar usuario</h2>
+                </div>
+                <div class="settings-card-body">
+                    <form method="POST" action="{{ url_for('admin_account') }}" novalidate>
+                        <input type="hidden" name="form_id" value="username">
+                        {{ username_form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ username_form.new_username.label(class="form-label") }}
+                            {{ username_form.new_username(class="form-control", autocomplete="username") }}
+                            {% for e in username_form.new_username.errors %}<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>{% endfor %}
+                        </div>
+                        <div class="mb-4">
+                            {{ username_form.current_password.label(class="form-label") }}
+                            {{ username_form.current_password(class="form-control", autocomplete="current-password") }}
+                            {% for e in username_form.current_password.errors %}<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>{% endfor %}
+                        </div>
+                        <button type="submit" class="btn-save w-100">{{ username_form.submit.label.text }}</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Correo -->
+            <div class="settings-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="settings-card-header">
+                    <i class="fas fa-envelope"></i>
+                    <h2>Correo electrónico</h2>
+                </div>
+                <div class="settings-card-body">
+                    <form method="POST" action="{{ url_for('admin_account') }}" novalidate>
+                        <input type="hidden" name="form_id" value="email">
+                        {{ email_form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ email_form.email.label(class="form-label") }}
+                            {{ email_form.email(class="form-control", autocomplete="email", placeholder="tu@correo.com") }}
+                            {% for e in email_form.email.errors %}<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>{% endfor %}
+                        </div>
+                        <div class="mb-4">
+                            {{ email_form.current_password.label(class="form-label") }}
+                            {{ email_form.current_password(class="form-control", autocomplete="current-password") }}
+                            {% for e in email_form.current_password.errors %}<div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>{% endfor %}
+                        </div>
+                        <button type="submit" class="btn-save w-100">{{ email_form.submit.label.text }}</button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

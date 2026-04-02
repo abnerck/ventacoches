@@ -1,24 +1,39 @@
-from flask import Flask, render_template, redirect, url_for, flash, request, abort
+from flask import Flask, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import inspect, text
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, FloatField, TextAreaField, IntegerField, SelectField, SubmitField, FileField
-from wtforms.validators import DataRequired, Length, NumberRange
+from wtforms.validators import DataRequired, Length, NumberRange, Optional, Email, EqualTo
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
+import shutil
 from dotenv import load_dotenv
 from datetime import datetime
 
 load_dotenv()
 
+# SQLite en instance/ (convención Flask). Si aún tienes cars.db en la raíz del proyecto, se copia una vez.
+_APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+_INSTANCE_DIR = os.path.join(_APP_ROOT, 'instance')
+os.makedirs(_INSTANCE_DIR, exist_ok=True)
+_DB_INSTANCE = os.path.join(_INSTANCE_DIR, 'cars.db')
+_DB_LEGACY = os.path.join(_APP_ROOT, 'cars.db')
+if not os.path.isfile(_DB_INSTANCE) and os.path.isfile(_DB_LEGACY):
+    shutil.copy2(_DB_LEGACY, _DB_INSTANCE)
+    print('BD: migrada cars.db → instance/cars.db')
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cars.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + _DB_INSTANCE.replace('\\', '/')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Configuración para subida de imágenes
-app.config['UPLOAD_FOLDER'] = 'static/uploads/cars'
+# Ruta absoluta: las subidas coinciden siempre con /static/... del servidor
+app.config['UPLOAD_FOLDER'] = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads', 'cars'
+)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB máximo
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
@@ -27,10 +42,52 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Por favor, inicia sesión para acceder a esta página.'
 
+
+from twilio.rest import Client
+
+
+def enviar_whatsapp(numero, mensaje):
+    account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+    auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+    from_whatsapp = os.getenv('TWILIO_WHATSAPP_FROM', 'whatsapp:+14155238886')
+    if not account_sid or not auth_token:
+        raise RuntimeError('Configura TWILIO_ACCOUNT_SID y TWILIO_AUTH_TOKEN en .env')
+    client = Client(account_sid, auth_token)
+    client.messages.create(
+        from_=from_whatsapp,
+        to=f'whatsapp:{numero}',
+        body=mensaje
+    )
+
+@app.route("/api/test-whatsapp", methods=['GET'])
+@login_required
+def test_whatsapp():
+    if not current_user.is_admin:
+        abort(403)
+    try:
+        destino = os.getenv('TWILIO_TEST_WHATSAPP_TO', '').strip()
+        if not destino:
+            return jsonify({'error': 'Configura TWILIO_TEST_WHATSAPP_TO en .env (ej. +521234567890)'}), 400
+        enviar_whatsapp(destino, 'Hola! Prueba desde Flask 🎉')
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # Función para verificar extensiones de archivo
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+
+def safe_redirect_target(target):
+    """Evita open redirect tras login: solo rutas relativas del mismo sitio."""
+    if not target or not isinstance(target, str):
+        return None
+    t = target.strip()
+    if t.startswith('/') and not t.startswith('//') and '\n' not in t and '\r' not in t:
+        return t
+    return None
 
 # Modelos
 class User(UserMixin, db.Model):
@@ -38,6 +95,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    email = db.Column(db.String(120), nullable=True)
 
 class Car(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -67,19 +125,57 @@ class LoginForm(FlaskForm):
     password = PasswordField('Contraseña', validators=[DataRequired()])
     submit = SubmitField('Iniciar Sesión')
 
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('Contraseña actual', validators=[DataRequired()])
+    new_password = PasswordField(
+        'Nueva contraseña',
+        validators=[DataRequired(), Length(min=8, max=128, message='Entre 8 y 128 caracteres.')],
+    )
+    new_password2 = PasswordField(
+        'Confirmar nueva contraseña',
+        validators=[DataRequired(), EqualTo('new_password', message='Las contraseñas nuevas no coinciden.')],
+    )
+    submit = SubmitField('Actualizar contraseña')
+
+
+class ChangeUsernameForm(FlaskForm):
+    new_username = StringField(
+        'Nuevo nombre de usuario',
+        validators=[DataRequired(), Length(min=3, max=80, message='Entre 3 y 80 caracteres.')],
+    )
+    current_password = PasswordField('Contraseña actual', validators=[DataRequired()])
+    submit = SubmitField('Cambiar usuario')
+
+
+class ChangeEmailForm(FlaskForm):
+    email = StringField(
+        'Correo electrónico',
+        validators=[Optional(), Length(max=120), Email(message='Introduce un correo válido.')],
+    )
+    current_password = PasswordField('Contraseña actual', validators=[DataRequired()])
+    submit = SubmitField('Guardar correo')
+
+
 class CarForm(FlaskForm):
-    marca = StringField('Marca', validators=[DataRequired(), Length(min=2, max=100)])
-    modelo = StringField('Modelo', validators=[DataRequired(), Length(min=2, max=100)])
-    año = IntegerField('Año', validators=[DataRequired(), NumberRange(min=1900, max=2024)])
-    precio = FloatField('Precio (€)', validators=[DataRequired(), NumberRange(min=0)])
-    kilometraje = IntegerField('Kilometraje (km)', validators=[NumberRange(min=0)])
+    marca = StringField('Marca', validators=[DataRequired(), Length(min=2, max=100, message='Entre 2 y 100 caracteres.')])
+    modelo = StringField('Modelo', validators=[DataRequired(), Length(min=2, max=100, message='Entre 2 y 100 caracteres.')])
+    año = IntegerField('Año', validators=[DataRequired(), NumberRange(min=1900, max=2030, message='Año entre 1900 y 2030.')])
+    precio = FloatField(
+        'Precio (MXN)',
+        validators=[DataRequired(), NumberRange(min=0, max=99_999_999.99, message='Precio no válido.')],
+    )
+    kilometraje = IntegerField(
+        'Kilometraje (km)',
+        validators=[Optional(), NumberRange(min=0, max=2_000_000, message='Kilometraje no válido.')],
+    )
     tipo_combustible = SelectField('Combustible', choices=[
         ('gasolina', 'Gasolina'),
         ('diesel', 'Diésel'),
         ('hibrido', 'Híbrido'),
         ('electrico', 'Eléctrico')
     ])
-    descripcion = TextAreaField('Descripción')
+    descripcion = TextAreaField('Descripción', validators=[Optional(), Length(max=20000, message='Máximo 20.000 caracteres.')])
     submit = SubmitField('Guardar Coche')
 
 @login_manager.user_loader
@@ -98,38 +194,58 @@ def create_admin_user():
         db.session.commit()
         print("Usuario admin creado: admin / admin123")
 
+
+def ensure_user_email_column():
+    """SQLite: añade columna email a user si no existe."""
+    try:
+        insp = inspect(db.engine)
+        if 'user' not in insp.get_table_names():
+            return
+        cols = {c['name'] for c in insp.get_columns('user')}
+        if 'email' in cols:
+            return
+        db.session.execute(text('ALTER TABLE user ADD COLUMN email VARCHAR(120)'))
+        db.session.commit()
+    except Exception:
+        pass
+
+
 # Función para guardar imágenes
 def save_car_photos(car_id, files):
     saved_filenames = []
-    
+    existing_count = CarPhoto.query.filter_by(car_id=car_id).count()
+
     for i, file in enumerate(files):
-        if file and file.filename != '' and allowed_file(file.filename):
-            # Generar nombre seguro único
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-            original_name = secure_filename(file.filename)
-            filename = f"{timestamp}_{original_name}"
-            
-            # Crear carpeta si no existe
-            car_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(car_id))
-            os.makedirs(car_folder, exist_ok=True)
-            
-            # Guardar archivo
-            file_path = os.path.join(car_folder, filename)
-            file.save(file_path)
-            
-            # Crear registro en la base de datos
-            photo = CarPhoto(
-                car_id=car_id,
-                filename=filename,
-                is_primary=(i == 0),  # La primera foto es la principal
-                orden=i
-            )
-            db.session.add(photo)
-            saved_filenames.append(filename)
-    
+        if not file or not file.filename or not allowed_file(file.filename):
+            continue
+        original_name = secure_filename(file.filename)
+        if not original_name:
+            continue
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        filename = f"{timestamp}_{original_name}"
+
+        car_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(car_id))
+        os.makedirs(car_folder, exist_ok=True)
+
+        file_path = os.path.join(car_folder, filename)
+        file.save(file_path)
+
+        # Solo la primera foto del coche (en cualquier subida) es principal
+        is_primary = existing_count == 0 and i == 0
+        orden = existing_count + i
+
+        photo = CarPhoto(
+            car_id=car_id,
+            filename=filename,
+            is_primary=is_primary,
+            orden=orden,
+        )
+        db.session.add(photo)
+        saved_filenames.append(filename)
+
     if saved_filenames:
         db.session.commit()
-    
+
     return saved_filenames
 
 # Función para obtener la URL de una foto
@@ -145,16 +261,25 @@ def get_primary_photo_url(car):
 
 # Rutas públicas
 @app.route("/")
+@app.route("/gestorianacional")
+def gestoria():
+    """Página principal: Gestoría Nacional (trámites)."""
+    return render_template("gestoria.html")
+
+
+@app.route("/inicio")
 def home():
+    """Vitrina con últimas incorporaciones (coches)."""
     cars = Car.query.filter_by(activo=True).order_by(Car.fecha_creacion.desc()).limit(6).all()
-    # Añadir URL de foto principal a cada coche
     for car in cars:
         car.photo_url = get_primary_photo_url(car)
     return render_template("index.html", cars=cars)
 
 @app.route("/coches")
 def public_cars():
-    page = request.args.get('page', 1, type=int)
+    page = request.args.get('page', 1, type=int) or 1
+    if page < 1:
+        page = 1
     cars = Car.query.filter_by(activo=True).order_by(Car.fecha_creacion.desc()).paginate(page=page, per_page=9)
     # Añadir URL de foto principal a cada coche
     for car in cars.items:
@@ -184,7 +309,8 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user and check_password_hash(user.password_hash, form.password.data):
             login_user(user)
-            next_page = request.args.get('next')
+            next_raw = request.args.get('next')
+            next_page = safe_redirect_target(next_raw) if next_raw else None
             flash('¡Inicio de sesión exitoso!', 'success')
             return redirect(next_page or url_for('admin_dashboard'))
         else:
@@ -197,7 +323,7 @@ def login():
 def logout():
     logout_user()
     flash('Has cerrado sesión correctamente', 'info')
-    return redirect(url_for('home'))
+    return redirect(url_for('gestoria'))
 
 # Rutas del admin
 @app.route("/admin/dashboard")
@@ -232,11 +358,86 @@ def admin_cars():
     
     return render_template("admin/cars.html", cars=cars)
 
-@app.route("/gestorianacional")
+
+@app.route("/admin/cuenta", methods=['GET', 'POST'])
 @login_required
-def gestoria():
-        
-    return render_template("gestoria.html")   
+def admin_account():
+    if not current_user.is_admin:
+        abort(403)
+
+    user = User.query.get_or_404(current_user.id)
+    pw_form = ChangePasswordForm(prefix='pw')
+    username_form = ChangeUsernameForm(prefix='usr')
+    email_form = ChangeEmailForm(prefix='em')
+
+    if request.method == 'POST':
+        form_id = request.form.get('form_id')
+
+        if form_id == 'password':
+            pw_form = ChangePasswordForm(prefix='pw', data=request.form)
+            username_form = ChangeUsernameForm(prefix='usr')
+            email_form = ChangeEmailForm(prefix='em')
+            if user.email:
+                email_form.email.data = user.email
+            if pw_form.validate_on_submit():
+                if not check_password_hash(user.password_hash, pw_form.current_password.data):
+                    flash('La contraseña actual no es correcta.', 'danger')
+                else:
+                    user.password_hash = generate_password_hash(pw_form.new_password.data)
+                    db.session.commit()
+                    flash('Contraseña actualizada correctamente.', 'success')
+                    return redirect(url_for('admin_account'))
+
+        elif form_id == 'username':
+            username_form = ChangeUsernameForm(prefix='usr', data=request.form)
+            pw_form = ChangePasswordForm(prefix='pw')
+            email_form = ChangeEmailForm(prefix='em')
+            if user.email:
+                email_form.email.data = user.email
+            if username_form.validate_on_submit():
+                if not check_password_hash(user.password_hash, username_form.current_password.data):
+                    flash('La contraseña actual no es correcta.', 'danger')
+                else:
+                    new_u = (username_form.new_username.data or '').strip()
+                    taken = User.query.filter(User.username == new_u, User.id != user.id).first()
+                    if taken:
+                        flash('Ese nombre de usuario ya está en uso.', 'danger')
+                    elif new_u == user.username:
+                        flash('El nuevo usuario es igual al actual.', 'warning')
+                    else:
+                        user.username = new_u
+                        db.session.commit()
+                        flash('Nombre de usuario actualizado. Usa el nuevo nombre para iniciar sesión.', 'success')
+                        return redirect(url_for('admin_account'))
+
+        elif form_id == 'email':
+            email_form = ChangeEmailForm(prefix='em', data=request.form)
+            pw_form = ChangePasswordForm(prefix='pw')
+            username_form = ChangeUsernameForm(prefix='usr')
+            if email_form.validate_on_submit():
+                if not check_password_hash(user.password_hash, email_form.current_password.data):
+                    flash('La contraseña actual no es correcta.', 'danger')
+                else:
+                    raw = (email_form.email.data or '').strip()
+                    user.email = raw or None
+                    db.session.commit()
+                    flash('Correo guardado correctamente.', 'success')
+                    return redirect(url_for('admin_account'))
+    else:
+        if user.email:
+            email_form.email.data = user.email
+
+    if not (request.method == 'POST' and request.form.get('form_id') == 'username'):
+        username_form.new_username.data = user.username
+
+    return render_template(
+        'admin/account.html',
+        user=user,
+        pw_form=pw_form,
+        username_form=username_form,
+        email_form=email_form,
+    )
+
 
 @app.route("/admin/coche/nuevo", methods=['GET', 'POST'])
 @login_required
@@ -246,15 +447,14 @@ def add_car():
     
     form = CarForm()
     if form.validate_on_submit():
-        # Crear el coche primero
         car = Car(
-            marca=form.marca.data,
-            modelo=form.modelo.data,
+            marca=(form.marca.data or '').strip(),
+            modelo=(form.modelo.data or '').strip(),
             año=form.año.data,
             precio=form.precio.data,
             kilometraje=form.kilometraje.data,
             tipo_combustible=form.tipo_combustible.data,
-            descripcion=form.descripcion.data
+            descripcion=(form.descripcion.data or '').strip() or None,
         )
         db.session.add(car)
         db.session.flush()  # Obtener el ID sin commit
@@ -275,32 +475,32 @@ def add_car():
 def edit_car(id):
     if not current_user.is_admin:
         abort(403)
-    
+
     car = Car.query.get_or_404(id)
-    form = CarForm(obj=car)
-    
+    if request.method == 'POST':
+        form = CarForm()
+    else:
+        form = CarForm(obj=car)
+
     if form.validate_on_submit():
-        # Actualizar datos del coche
-        car.marca = form.marca.data
-        car.modelo = form.modelo.data
+        car.marca = (form.marca.data or '').strip()
+        car.modelo = (form.modelo.data or '').strip()
         car.año = form.año.data
         car.precio = form.precio.data
         car.kilometraje = form.kilometraje.data
         car.tipo_combustible = form.tipo_combustible.data
-        car.descripcion = form.descripcion.data
-        
-        # Agregar nuevas fotos si se subieron
+        car.descripcion = (form.descripcion.data or '').strip() or None
+
         if 'fotos' in request.files:
             files = request.files.getlist('fotos')
             save_car_photos(car.id, files)
-        
+
         db.session.commit()
         flash('Coche actualizado correctamente', 'success')
         return redirect(url_for('admin_cars'))
-    
-    # Obtener URLs de las fotos existentes
+
     car.existing_photos = [get_photo_url(car.id, photo.filename) for photo in car.fotos]
-    
+
     return render_template("admin/edit_car.html", form=form, car=car)
 
 @app.route("/admin/coche/eliminar-foto/<int:photo_id>", methods=['POST'])
@@ -311,19 +511,26 @@ def delete_photo(photo_id):
     
     photo = CarPhoto.query.get_or_404(photo_id)
     car_id = photo.car_id
-    
-    # Eliminar archivo físico
+    was_primary = photo.is_primary
+
     try:
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], str(car_id), photo.filename)
-        if os.path.exists(file_path):
+        if os.path.isfile(file_path):
             os.remove(file_path)
-    except:
+    except OSError:
         pass
-    
-    # Eliminar registro de la base de datos
+
     db.session.delete(photo)
+    db.session.flush()
+
+    if was_primary:
+        next_photo = CarPhoto.query.filter_by(car_id=car_id).order_by(CarPhoto.orden.asc()).first()
+        if next_photo:
+            CarPhoto.query.filter_by(car_id=car_id).update({'is_primary': False})
+            next_photo.is_primary = True
+
     db.session.commit()
-    
+
     flash('Foto eliminada correctamente', 'success')
     return redirect(url_for('edit_car', id=car_id))
 
@@ -368,15 +575,15 @@ def permanently_delete_car(id):
     
     car = Car.query.get_or_404(id)
     
-    # Eliminar fotos físicas
     try:
         car_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(id))
-        if os.path.exists(car_folder):
+        if os.path.isdir(car_folder):
             for filename in os.listdir(car_folder):
-                file_path = os.path.join(car_folder, filename)
-                os.remove(file_path)
+                fp = os.path.join(car_folder, filename)
+                if os.path.isfile(fp):
+                    os.remove(fp)
             os.rmdir(car_folder)
-    except:
+    except OSError:
         pass
     
     # Eliminar de la base de datos (las fotos se eliminan por cascade)
@@ -399,10 +606,20 @@ def forbidden(e):
 def internal_server_error(e):
     return render_template('errors/500.html'), 500
 
+
+@app.errorhandler(413)
+def request_entity_too_large(e):
+    flash('Los archivos superan el tamaño máximo permitido (16 MB en total por petición).', 'danger')
+    return redirect(request.referrer or url_for('gestoria'))
+
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+        ensure_user_email_column()
         create_admin_user()
-        # Crear carpeta de uploads si no existe
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    app.run(debug=True)
+    # Puerto/host por env para no chocar con otra app en :5000 (ej. FLASK_PORT=5055 en .env)
+    _port = int(os.getenv('FLASK_PORT', '5000'))
+    _host = os.getenv('FLASK_HOST', '127.0.0.1')
+    app.run(debug=True, host=_host, port=_port)

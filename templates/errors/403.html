@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Acceso denegado - Gestoría Nacional{% endblock %}
+{% block extra_css %}
+<style>
+    .err-page { min-height: 70vh; padding: 120px 0 80px; display: flex; align-items: center; }
+    .err-card {
+        max-width: 480px; margin: 0 auto; text-align: center;
+        background: white; border-radius: 20px; border: 2px solid var(--gray-light);
+        padding: 2.5rem 2rem; box-shadow: 0 12px 40px rgba(0,0,0,.08);
+    }
+    .err-code { font-family: 'Bebas Neue', cursive; font-size: 5rem; line-height: 1; color: #b45309; letter-spacing: 4px; }
+    .err-card h1 { font-size: 1.35rem; font-weight: 700; margin: 1rem 0 .6rem; color: var(--text-dark); }
+    .err-card p { color: #777; margin-bottom: 1.5rem; font-size: .95rem; }
+    .err-actions a {
+        display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 50px;
+        font-weight: 700; font-size: .88rem; text-decoration: none; text-transform: uppercase;
+        background: var(--grad-blue); color: white; box-shadow: 0 6px 20px rgba(10,77,173,.35);
+    }
+    .err-actions a:hover { color: white; transform: translateY(-2px); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="err-page">
+    <div class="container">
+        <div class="err-card" data-aos="fade-up">
+            <div class="err-code">403</div>
+            <h1>Acceso denegado</h1>
+            <p>No tienes permiso para ver esta sección. Si eres administrador, inicia sesión.</p>
+            <div class="err-actions">
+                <a href="{{ url_for('gestoria') }}"><i class="fas fa-house"></i> Volver al inicio</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

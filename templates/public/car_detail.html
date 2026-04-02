@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ car.marca }} {{ car.modelo }} - AutoVenta Premium{% endblock %}
+{% block title %}{{ car.marca }} {{ car.modelo }} - Gestoría Nacional{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -355,7 +355,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
-                    <a href="{{ url_for('home') }}"><i class="fas fa-house me-1"></i>Inicio</a>
+                    <a href="{{ url_for('gestoria') }}"><i class="fas fa-house me-1"></i>Inicio</a>
                 </li>
                 <li class="breadcrumb-item">
                     <a href="{{ url_for('public_cars') }}">Colección</a>
@@ -451,7 +451,7 @@
                     <div class="sidebar-body">
 
                         <!-- Price -->
-                        <span class="car-price-big">{{ "{:,.0f}".format(car.precio) }} €</span>
+                        <span class="car-price-big">${{ "{:,.0f}".format(car.precio) }} MXN</span>
 
                         <!-- Specs -->
                         <div class="specs-grid">

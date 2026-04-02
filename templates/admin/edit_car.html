@@ -15,11 +15,11 @@
     /* ── PAGE HEADER ── */
     .page-header {
         background: var(--dark-bg);
-        padding: 28px 0 24px;
+        padding: calc(var(--navbar-height) + 1.25rem) 0 1.5rem;
         margin-bottom: 2rem;
         border-bottom: 3px solid var(--primary);
         position: relative;
-        overflow: hidden;
+        overflow: visible;
     }
     .page-header::before {
         content: '';
@@ -145,6 +145,14 @@
     }
     .form-text { font-size: .78rem; color: #999; margin-top: .3rem; }
     textarea.form-control { resize: vertical; min-height: 120px; }
+    .field-error {
+        color: #ef4444;
+        font-size: .78rem;
+        margin-top: .3rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
 
     /* ── PHOTO GALLERY ── */
     .photo-grid {
@@ -414,51 +422,49 @@
 
                             <div class="row g-3">
                                 <div class="col-6">
-                                    <label class="form-label">Marca *</label>
-                                    <input type="text" class="form-control" name="marca" id="marca"
-                                           value="{{ form.marca.data or car.marca }}" required
-                                           placeholder="Ej: BMW">
+                                    {{ form.marca.label(class="form-label") }}
+                                    {{ form.marca(class="form-control", placeholder="Ej: Nissan", id="marca") }}
+                                    {% for e in form.marca.errors %}
+                                    <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>
+                                    {% endfor %}
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label">Modelo *</label>
-                                    <input type="text" class="form-control" name="modelo" id="modelo"
-                                           value="{{ form.modelo.data or car.modelo }}" required
-                                           placeholder="Ej: Serie 5">
+                                    {{ form.modelo.label(class="form-label") }}
+                                    {{ form.modelo(class="form-control", placeholder="Ej: Versa", id="modelo") }}
+                                    {% for e in form.modelo.errors %}
+                                    <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>
+                                    {% endfor %}
                                 </div>
                                 <div class="col-4">
-                                    <label class="form-label">Año *</label>
-                                    <input type="number" class="form-control" name="año" id="año"
-                                           value="{{ form.año.data or car.año }}"
-                                           min="1900" max="2030" required>
+                                    {{ form.año.label(class="form-label") }}
+                                    {{ form.año(class="form-control", placeholder="2024", min="1900", max="2030", id="año") }}
+                                    {% for e in form.año.errors %}
+                                    <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>
+                                    {% endfor %}
                                 </div>
                                 <div class="col-4">
-                                    <label class="form-label">Precio *</label>
+                                    {{ form.precio.label(class="form-label") }}
                                     <div class="input-group">
-                                        <input type="number" step="0.01" class="form-control"
-                                               name="precio" id="precio"
-                                               value="{{ form.precio.data or car.precio }}"
-                                               min="0" required>
-                                        <span class="input-group-text">€</span>
+                                        {{ form.precio(class="form-control", placeholder="350000", step="0.01", min="0", id="precio") }}
+                                        <span class="input-group-text">MXN</span>
                                     </div>
+                                    {% for e in form.precio.errors %}
+                                    <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>
+                                    {% endfor %}
                                 </div>
                                 <div class="col-4">
-                                    <label class="form-label">Kilometraje</label>
+                                    {{ form.kilometraje.label(class="form-label") }}
                                     <div class="input-group">
-                                        <input type="number" class="form-control"
-                                               name="kilometraje" id="kilometraje"
-                                               value="{{ form.kilometraje.data or car.kilometraje }}"
-                                               min="0">
+                                        {{ form.kilometraje(class="form-control", placeholder="45000", min="0", id="kilometraje") }}
                                         <span class="input-group-text">km</span>
                                     </div>
+                                    {% for e in form.kilometraje.errors %}
+                                    <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>
+                                    {% endfor %}
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label">Combustible</label>
-                                    <select class="form-select" name="tipo_combustible" id="tipo_combustible">
-                                        <option value="gasolina"  {% if (form.tipo_combustible.data or car.tipo_combustible) == 'gasolina'  %}selected{% endif %}>⛽ Gasolina</option>
-                                        <option value="diesel"    {% if (form.tipo_combustible.data or car.tipo_combustible) == 'diesel'    %}selected{% endif %}>🛢️ Diésel</option>
-                                        <option value="hibrido"   {% if (form.tipo_combustible.data or car.tipo_combustible) == 'hibrido'   %}selected{% endif %}>🌿 Híbrido</option>
-                                        <option value="electrico" {% if (form.tipo_combustible.data or car.tipo_combustible) == 'electrico' %}selected{% endif %}>⚡ Eléctrico</option>
-                                    </select>
+                                    {{ form.tipo_combustible.label(class="form-label") }}
+                                    {{ form.tipo_combustible(class="form-select", id="tipo_combustible") }}
                                 </div>
                             </div>
 
@@ -472,10 +478,12 @@
                             <h5>Descripción</h5>
                         </div>
                         <div class="form-card-body">
-                            <label class="form-label">Descripción del vehículo</label>
-                            <textarea class="form-control" name="descripcion" id="descripcion"
-                                      rows="6"
-                                      placeholder="Describe el vehículo, sus características y estado…">{{ form.descripcion.data or car.descripcion or '' }}</textarea>
+                            {{ form.descripcion.label(class="form-label") }}
+                            {{ form.descripcion(class="form-control", rows=6, id="descripcion",
+                               placeholder="Describe el vehículo, sus características y estado…") }}
+                            {% for e in form.descripcion.errors %}
+                            <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>

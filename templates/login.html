@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Acceso Admin - AutoVenta Premium{% endblock %}
+{% block title %}Acceso Admin - Gestoría Nacional{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -86,6 +86,15 @@
         padding: 2rem 2rem 1.6rem;
         text-align: center;
         position: relative;
+    }
+    .login-header .login-brand-logo {
+        height: 56px;
+        width: auto;
+        max-width: 220px;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto 1rem;
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
     }
     .login-header .lock-icon {
         width: 64px; height: 64px;
@@ -288,11 +297,9 @@
 
         <!-- Header -->
         <div class="login-header">
-            <div class="lock-icon">
-                <i class="fas fa-shield-halved"></i>
-            </div>
+            <img src="{{ url_for('static', filename='img/lg.png') }}" alt="Gestoría Nacional" class="login-brand-logo" width="200" height="56">
             <h3>Acceso Admin</h3>
-            <p>Panel de administración — AutoVenta Premium</p>
+            <p>Panel de administración</p>
         </div>
 
         <!-- Body -->
@@ -358,7 +365,7 @@
 
     <!-- Back link (outside card) -->
     <div class="back-link" style="position:absolute; bottom: 24px; left:0; right:0;">
-        <a href="{{ url_for('home') }}">
+        <a href="{{ url_for('gestoria') }}">
             <i class="fas fa-arrow-left"></i> Volver al inicio
         </a>
     </div>

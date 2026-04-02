@@ -15,11 +15,12 @@
     /* ── PAGE HEADER ── */
     .page-header {
         background: var(--dark-bg);
-        padding: 28px 0 24px;
+        /* Debajo de la navbar fija (sin esto el botón queda tapado) */
+        padding: calc(var(--navbar-height) + 1.25rem) 0 1.5rem;
         margin-bottom: 2rem;
         border-bottom: 3px solid var(--primary);
         position: relative;
-        overflow: hidden;
+        overflow: visible;
     }
     .page-header::before {
         content: '';
@@ -35,18 +36,24 @@
         margin: 0;
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: 12px;
+        text-shadow: 0 2px 14px rgba(0,0,0,.35);
     }
     .page-header .page-title i { color: var(--secondary); }
     .page-header .page-subtitle {
-        color: rgba(255,255,255,.45);
-        font-size: .82rem;
-        margin: .3rem 0 0;
-        font-weight: 400;
+        color: rgba(255,255,255,.92);
+        font-size: .95rem;
+        margin: .45rem 0 0;
+        font-weight: 500;
+        letter-spacing: .02em;
+        line-height: 1.45;
+        max-width: 38rem;
+        text-shadow: 0 1px 10px rgba(0,0,0,.45);
     }
     .count-pill {
-        background: rgba(255,255,255,.12);
-        color: rgba(255,255,255,.8);
+        background: rgba(255,255,255,.2);
+        color: rgba(255,255,255,.95);
         font-family: 'Outfit', sans-serif;
         font-size: .75rem;
         font-weight: 700;
@@ -56,27 +63,89 @@
         vertical-align: middle;
         margin-left: 8px;
     }
-    .btn-add {
+    .page-header-inner {
+        position: relative;
+        z-index: 2;
+        align-items: center;
+    }
+    .page-header .header-actions {
+        position: relative;
+        z-index: 5;
+        flex-shrink: 0;
+    }
+    /* CTA muy visible sobre fondo oscuro */
+    .page-header .btn-add {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
+        color: #422006;
+        border: 3px solid #ca8a04;
+        border-radius: 50px;
+        padding: 14px 28px;
+        font-size: 1rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        text-decoration: none !important;
+        transition: transform .2s, box-shadow .2s;
+        box-shadow: 0 4px 0 #a16207, 0 8px 24px rgba(0,0,0,.4);
+    }
+    .page-header .btn-add i {
+        font-size: 1.1rem;
+        color: #713f12;
+    }
+    .page-header .btn-add:hover {
+        transform: translateY(-2px);
+        color: #1c1917;
+        border-color: #eab308;
+        box-shadow: 0 6px 0 #a16207, 0 14px 32px rgba(0,0,0,.45);
+    }
+    /* Mismo enlace más compacto junto al título de la tabla */
+    .btn-add-sm {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: var(--grad-blue);
-        color: white;
-        border: none;
+        background: #fff;
+        color: var(--primary);
         border-radius: 50px;
-        padding: 11px 22px;
-        font-size: .88rem;
-        font-weight: 700;
+        padding: 8px 18px;
+        font-size: .8rem;
+        font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: .8px;
+        letter-spacing: .6px;
         text-decoration: none;
-        transition: all .3s;
-        box-shadow: 0 5px 16px rgba(10,77,173,.3);
+        white-space: nowrap;
+        box-shadow: 0 4px 14px rgba(0,0,0,.2);
+        transition: all .25s;
     }
-    .btn-add:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 26px rgba(10,77,173,.42);
-        color: white;
+    .btn-add-sm:hover {
+        background: rgba(255,255,255,.92);
+        color: var(--primary);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(0,0,0,.25);
+    }
+
+    .empty-state-full .btn-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
+        color: #422006;
+        border: 3px solid #ca8a04;
+        border-radius: 50px;
+        padding: 14px 28px;
+        font-size: 1rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        text-decoration: none !important;
+        box-shadow: 0 4px 0 #a16207, 0 8px 24px rgba(0,0,0,.25);
+    }
+    .empty-state-full .btn-add:hover {
+        color: #1c1917;
+        transform: translateY(-2px);
     }
 
     /* ── FILTERS ── */
@@ -145,6 +214,13 @@
         align-items: center;
         justify-content: space-between;
         gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .table-card-header-right {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
     }
     .table-card-header h5 {
         font-family: 'Bebas Neue', cursive;
@@ -349,7 +425,19 @@
 
     @media (max-width: 768px) {
         .admin-page { padding-top: 72px; }
-        .page-header .d-flex { flex-direction: column; align-items: flex-start; gap: .8rem; }
+        .page-header-inner {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 1rem !important;
+        }
+        .page-header .header-actions { width: 100%; }
+        .page-header .btn-add {
+            width: 100%;
+            justify-content: center;
+            padding: 14px 22px;
+            font-size: 1rem;
+        }
+        .page-header .page-subtitle { max-width: none; }
         .filters-card .row > div { margin-bottom: .5rem; }
     }
 </style>
@@ -360,7 +448,7 @@
 
 <!-- ── PAGE HEADER ── -->
 <div class="page-header">
-    <div class="container d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div class="container page-header-inner d-flex align-items-center justify-content-between flex-wrap gap-3">
         <div>
             <h1 class="page-title">
                 <i class="fas fa-car"></i> Gestionar Coches
@@ -368,9 +456,11 @@
             </h1>
             <p class="page-subtitle">Administra el inventario de vehículos</p>
         </div>
-        <a href="{{ url_for('add_car') }}" class="btn-add">
-            <i class="fas fa-plus"></i> Nuevo Coche
-        </a>
+        <div class="header-actions">
+            <a href="{{ url_for('add_car') }}" class="btn-add">
+                <i class="fas fa-plus-circle"></i> Nuevo coche
+            </a>
+        </div>
     </div>
 </div>
 
@@ -427,7 +517,12 @@
         <div class="table-card" data-aos="fade-up">
             <div class="table-card-header">
                 <h5><i class="fas fa-list"></i> Inventario</h5>
-                <span class="results-count" id="resultsCount">{{ cars|length }} resultados</span>
+                <div class="table-card-header-right">
+                    <span class="results-count" id="resultsCount">{{ cars|length }} resultados</span>
+                    <a href="{{ url_for('add_car') }}" class="btn-add-sm">
+                        <i class="fas fa-plus"></i> Nuevo coche
+                    </a>
+                </div>
             </div>
 
             <div class="table-responsive">
@@ -488,7 +583,7 @@
                             <td><span class="year-badge">{{ car.año }}</span></td>
 
                             <td>
-                                <span class="price-text">{{ "{:,.0f}".format(car.precio) }} €</span>
+                                <span class="price-text">${{ "{:,.0f}".format(car.precio) }} MXN</span>
                             </td>
 
                             <td>

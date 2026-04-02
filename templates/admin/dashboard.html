@@ -15,11 +15,11 @@
     /* ── PAGE HEADER ── */
     .page-header {
         background: var(--dark-bg);
-        padding: 28px 0 24px;
+        padding: calc(var(--navbar-height) + 1.25rem) 0 1.5rem;
         margin-bottom: 2rem;
         border-bottom: 3px solid var(--primary);
         position: relative;
-        overflow: hidden;
+        overflow: visible;
     }
     .page-header::before {
         content: '';
@@ -36,37 +36,53 @@
         display: flex;
         align-items: center;
         gap: 12px;
+        text-shadow: 0 2px 14px rgba(0,0,0,.35);
     }
     .page-header .page-title i { color: var(--secondary); }
     .page-header .page-subtitle {
-        color: rgba(255,255,255,.45);
-        font-size: .82rem;
-        margin: .3rem 0 0;
-        font-weight: 400;
+        color: rgba(255,255,255,.92);
+        font-size: .95rem;
+        margin: .45rem 0 0;
+        font-weight: 500;
+        letter-spacing: .02em;
+        line-height: 1.45;
+        max-width: 36rem;
+        text-shadow: 0 1px 10px rgba(0,0,0,.45);
     }
 
-    /* add car btn */
+    .page-header-inner {
+        position: relative;
+        z-index: 2;
+        align-items: center;
+    }
+    .page-header .header-actions {
+        position: relative;
+        z-index: 2;
+        flex-shrink: 0;
+    }
     .btn-add {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        background: var(--grad-blue);
-        color: white;
-        border: none;
+        gap: 10px;
+        background: #ffffff;
+        color: var(--primary);
+        border: 2px solid rgba(255,255,255,.95);
         border-radius: 50px;
-        padding: 11px 22px;
-        font-size: .88rem;
-        font-weight: 700;
+        padding: 13px 26px;
+        font-size: .95rem;
+        font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: .8px;
+        letter-spacing: .9px;
         text-decoration: none;
         transition: all .3s;
-        box-shadow: 0 5px 16px rgba(10,77,173,.3);
+        box-shadow: 0 6px 24px rgba(0,0,0,.35), 0 0 0 1px rgba(10,77,173,.15), 0 0 0 3px rgba(95,168,255,.35);
     }
     .btn-add:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 26px rgba(10,77,173,.42);
-        color: white;
+        transform: translateY(-2px);
+        background: var(--secondary);
+        color: #fff;
+        border-color: var(--secondary);
+        box-shadow: 0 10px 28px rgba(10,77,173,.45);
     }
 
     /* ── STAT CARDS ── */
@@ -379,7 +395,19 @@
 
     @media (max-width: 768px) {
         .admin-page { padding-top: 72px; }
-        .page-header .d-flex { flex-direction: column; align-items: flex-start; gap: .8rem; }
+        .page-header-inner {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 1rem !important;
+        }
+        .page-header .header-actions { width: 100%; }
+        .page-header .btn-add {
+            width: 100%;
+            justify-content: center;
+            padding: 14px 22px;
+            font-size: 1rem;
+        }
+        .page-header .page-subtitle { max-width: none; }
     }
 </style>
 {% endblock %}
@@ -389,16 +417,18 @@
 
 <!-- ── PAGE HEADER ── -->
 <div class="page-header">
-    <div class="container d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div class="container page-header-inner d-flex align-items-center justify-content-between flex-wrap gap-3">
         <div>
             <h1 class="page-title">
                 <i class="fas fa-gauge-high"></i> Panel de Administración
             </h1>
             <p class="page-subtitle">Gestiona tu inventario de vehículos</p>
         </div>
-        <a href="{{ url_for('add_car') }}" class="btn-add">
-            <i class="fas fa-plus"></i> Añadir Nuevo Coche
-        </a>
+        <div class="header-actions">
+            <a href="{{ url_for('add_car') }}" class="btn-add">
+                <i class="fas fa-plus-circle"></i> Nuevo coche
+            </a>
+        </div>
     </div>
 </div>
 
@@ -451,6 +481,9 @@
                         <a href="{{ url_for('add_car') }}" class="qa-btn primary">
                             <i class="fas fa-plus"></i> Añadir
                         </a>
+                        <a href="{{ url_for('admin_account') }}" class="qa-btn outline">
+                            <i class="fas fa-user-gear"></i> Cuenta
+                        </a>
                     </div>
                 </div>
             </div>
@@ -492,7 +525,7 @@
                             <td><strong>{{ car.año }}</strong></td>
                             <td>
                                 <strong style="background:var(--grad-blue);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
-                                    {{ "{:,.0f}".format(car.precio) }} €
+                                    ${{ "{:,.0f}".format(car.precio) }} MXN
                                 </strong>
                             </td>
                             <td>

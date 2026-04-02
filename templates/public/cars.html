@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Coches en Venta - AutoVenta Premium{% endblock %}
+{% block title %}Coches en venta - Gestoría Nacional{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -57,6 +57,20 @@
         font-size: .92rem;
         font-weight: 400;
         margin: 0;
+    }
+    .catalog-header-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.35rem;
+    }
+    .catalog-header-brand .catalog-header-logo {
+        height: 40px;
+        width: auto;
+        max-width: 160px;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35));
     }
     .count-pill {
         display: inline-block;
@@ -325,7 +339,10 @@
     <div class="page-header">
         <div class="page-header-watermark">CATÁLOGO</div>
         <div class="container" data-aos="fade-up">
-            <p class="page-subtitle">AutoVenta Premium &rsaquo; Catálogo</p>
+            <div class="catalog-header-brand">
+                <img src="{{ url_for('static', filename='img/lg.png') }}" alt="Gestoría Nacional" class="catalog-header-logo" width="140" height="40">
+                <p class="page-subtitle mb-0">Catálogo de vehículos</p>
+            </div>
             <h1 class="page-title">Coches en <span>Venta</span></h1>
             <span class="count-pill">
                 <i class="fas fa-car"></i>
@@ -382,13 +399,13 @@
                 <!-- Price -->
                 <div class="col-md-2 col-6">
                     <div class="filter-group">
-                        <i class="fas fa-euro-sign filter-icon"></i>
+                        <i class="fas fa-dollar-sign filter-icon"></i>
                         <select class="form-select" id="priceFilter">
                             <option value="">Precio</option>
-                            <option value="0-20000">Hasta 20.000 €</option>
-                            <option value="20000-50000">20.000 – 50.000 €</option>
-                            <option value="50000-100000">50.000 – 100.000 €</option>
-                            <option value="100000-9999999">+100.000 €</option>
+                            <option value="0-500000">Hasta $500,000 MXN</option>
+                            <option value="500000-1000000">$500,000 – $1,000,000 MXN</option>
+                            <option value="1000000-2000000">$1,000,000 – $2,000,000 MXN</option>
+                            <option value="2000000-999999999">Más de $2,000,000 MXN</option>
                         </select>
                     </div>
                 </div>
@@ -447,7 +464,7 @@
                     <div class="card-body">
                         <p class="car-brand">{{ car.marca }}</p>
                         <p class="car-title">{{ car.modelo }}</p>
-                        <span class="car-price">{{ "{:,.0f}".format(car.precio) }} €</span>
+                        <span class="car-price">${{ "{:,.0f}".format(car.precio) }} MXN</span>
 
                         <div class="car-specs">
                             <div class="spec-item">
@@ -548,7 +565,7 @@
             <i class="fas fa-car-side"></i>
             <h3>Colección en Preparación</h3>
             <p>Nuestro equipo está seleccionando los vehículos más exclusivos para ti. Vuelve pronto.</p>
-            <a href="{{ url_for('home') }}" class="btn-primary-custom">
+            <a href="{{ url_for('gestoria') }}" class="btn-primary-custom">
                 <i class="fas fa-home"></i> Volver al inicio
             </a>
         </div>

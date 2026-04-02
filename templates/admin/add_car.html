@@ -15,11 +15,11 @@
     /* ── PAGE HEADER ── */
     .page-header {
         background: var(--dark-bg);
-        padding: 28px 0 24px;
+        padding: calc(var(--navbar-height) + 1.25rem) 0 1.5rem;
         margin-bottom: 2rem;
         border-bottom: 3px solid var(--primary);
         position: relative;
-        overflow: hidden;
+        overflow: visible;
     }
     .page-header::before {
         content: '';
@@ -345,7 +345,7 @@
 
                                 <div class="col-4">
                                     {{ form.año.label(class="form-label") }}
-                                    {{ form.año(class="form-control", placeholder="2023") }}
+                                    {{ form.año(class="form-control", placeholder="2024", min="1900", max="2030") }}
                                     {% for e in form.año.errors %}
                                     <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>
                                     {% endfor %}
@@ -355,7 +355,7 @@
                                     {{ form.precio.label(class="form-label") }}
                                     <div class="input-group">
                                         {{ form.precio(class="form-control", placeholder="45000") }}
-                                        <span class="input-group-text">€</span>
+                                        <span class="input-group-text">MXN</span>
                                     </div>
                                     {% for e in form.precio.errors %}
                                     <div class="field-error"><i class="fas fa-circle-exclamation"></i> {{ e }}</div>
