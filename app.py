@@ -42,17 +42,23 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Por favor, inicia sesión para acceder a esta página.'
 
-
-from twilio.rest import Client
+try:
+    from twilio.rest import Client as TwilioClient
+except ImportError:
+    TwilioClient = None
 
 
 def enviar_whatsapp(numero, mensaje):
+    if TwilioClient is None:
+        raise RuntimeError(
+            'Falta el paquete twilio en el entorno del servidor (pip install twilio en el virtualenv de PythonAnywhere).'
+        )
     account_sid = os.getenv('TWILIO_ACCOUNT_SID')
     auth_token = os.getenv('TWILIO_AUTH_TOKEN')
     from_whatsapp = os.getenv('TWILIO_WHATSAPP_FROM', 'whatsapp:+14155238886')
     if not account_sid or not auth_token:
         raise RuntimeError('Configura TWILIO_ACCOUNT_SID y TWILIO_AUTH_TOKEN en .env')
-    client = Client(account_sid, auth_token)
+    client = TwilioClient(account_sid, auth_token)
     client.messages.create(
         from_=from_whatsapp,
         to=f'whatsapp:{numero}',
