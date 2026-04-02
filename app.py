@@ -213,7 +213,33 @@ def ensure_user_email_column():
         db.session.execute(text('ALTER TABLE user ADD COLUMN email VARCHAR(120)'))
         db.session.commit()
     except Exception:
-        pass
+        db.session.rollback()
+
+
+def ensure_car_photo_columns():
+    """SQLite: columnas nuevas en car_photo (BD antigua sin migrar)."""
+    try:
+        insp = inspect(db.engine)
+        if 'car_photo' not in insp.get_table_names():
+            return
+        cols = {c['name'] for c in insp.get_columns('car_photo')}
+        if 'is_primary' not in cols:
+            db.session.execute(text('ALTER TABLE car_photo ADD COLUMN is_primary BOOLEAN DEFAULT 0'))
+        if 'orden' not in cols:
+            db.session.execute(text('ALTER TABLE car_photo ADD COLUMN orden INTEGER DEFAULT 0'))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+
+def init_app_db():
+    """Crear tablas, migraciones ligeras SQLite y admin por defecto. Debe ejecutarse con WSGI (no solo con __main__)."""
+    with app.app_context():
+        db.create_all()
+        ensure_user_email_column()
+        ensure_car_photo_columns()
+        create_admin_user()
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 
 # Función para guardar imágenes
@@ -749,12 +775,9 @@ def api_subir_foto(id):
     return jsonify({'error': 'Archivo no válido'}), 400
 
 
+init_app_db()
+
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-        ensure_user_email_column()
-        create_admin_user()
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     _port = int(os.getenv('FLASK_PORT', '5000'))
     _host = os.getenv('FLASK_HOST', '127.0.0.1')
     app.run(debug=True, host=_host, port=_port)
