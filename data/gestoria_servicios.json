@@ -1,0 +1,15 @@
+{
+  "nombre": "Gestoría Nacional",
+  "descripcion_corta": "Trámites vehiculares y servicios de gestoría en México.",
+  "servicios": [
+    {
+      "id": "ejemplo",
+      "titulo": "Ejemplo de servicio",
+      "resumen": "Describe aquí cada trámite. El bot usará esto para responder.",
+      "detalle": "Texto más largo opcional para el modelo o respuestas fijas."
+    }
+  ],
+  "contacto": {
+    "nota": "Añade teléfono, horario y enlaces cuando los definas."
+  }
+}

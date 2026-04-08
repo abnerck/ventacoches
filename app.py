@@ -7,6 +7,7 @@ from wtforms import StringField, PasswordField, FloatField, TextAreaField, Integ
 from wtforms.validators import DataRequired, Length, NumberRange, Optional, Email, EqualTo
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+import json
 import os
 import shutil
 from dotenv import load_dotenv
@@ -773,6 +774,61 @@ def api_subir_foto(id):
         if saved:
             return jsonify({'success': True})
     return jsonify({'error': 'Archivo no válido'}), 400
+
+
+# --- API solo para el agente WhatsApp (VPS): requiere BOT_API_KEY en .env (PythonAnywhere) ---
+def _bot_api_gate():
+    """El VPS no puede abrir SQLite remoto; usa estas rutas con header X-Bot-Key."""
+    expected = (os.getenv('BOT_API_KEY') or '').strip()
+    if not expected:
+        return jsonify({'error': 'BOT_API_KEY no configurada en el servidor'}), 503
+    if (request.headers.get('X-Bot-Key') or '').strip() != expected:
+        return jsonify({'error': 'Clave de bot inválida'}), 401
+    return None
+
+
+@app.route('/api/bot/health', methods=['GET'])
+def api_bot_health():
+    gate = _bot_api_gate()
+    if gate:
+        return gate
+    return jsonify({'ok': True, 'service': 'gestoria-ventacoches-bot'})
+
+
+@app.route('/api/bot/gestoria', methods=['GET'])
+def api_bot_gestoria():
+    gate = _bot_api_gate()
+    if gate:
+        return gate
+    path = os.path.join(_APP_ROOT, 'data', 'gestoria_servicios.json')
+    if not os.path.isfile(path):
+        return jsonify({'error': 'Falta data/gestoria_servicios.json'}), 404
+    with open(path, encoding='utf-8') as f:
+        return jsonify(json.load(f))
+
+
+@app.route('/api/bot/coches', methods=['GET'])
+def api_bot_coches():
+    gate = _bot_api_gate()
+    if gate:
+        return gate
+    solo_activos = request.args.get('activos', 'true').lower() == 'true'
+    query = Car.query
+    if solo_activos:
+        query = query.filter_by(activo=True)
+    cars = query.order_by(Car.fecha_creacion.desc()).all()
+    return jsonify([car_to_dict(car) for car in cars])
+
+
+@app.route('/api/bot/coche/<int:id>', methods=['GET'])
+def api_bot_coche(id):
+    gate = _bot_api_gate()
+    if gate:
+        return gate
+    car = Car.query.get_or_404(id)
+    data = car_to_dict(car)
+    data['fotos'] = [get_photo_url(car.id, p.filename) for p in car.fotos]
+    return jsonify(data)
 
 
 init_app_db()
