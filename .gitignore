@@ -1,4 +1,6 @@
 venv/
+# Agente WhatsApp (VPS): no versionar aquí; despliegue aparte — ver docs/AGENTE_WHATSAPP.md
+whatsapp-agent/
 __pycache__/
 *.py[cod]
 .env
