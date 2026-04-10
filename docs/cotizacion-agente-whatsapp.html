@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cotización — Agente WhatsApp</title>
+  <style>
+    :root{
+      --bg:#f3f7fc;
+      --card:#ffffff;
+      --text:#162033;
+      --muted:#5c6a7f;
+      --line:#dce4ef;
+      --brand:#1463ff;
+      --brand-dark:#0f4ac0;
+      --ok:#0a8f5a;
+      --warn:#b45309;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:linear-gradient(120deg,#edf3ff,#f8fbff 60%,#eef8f2);
+    }
+    .page{
+      max-width:900px;
+      margin:24px auto;
+      padding:0 16px 24px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:14px;
+      box-shadow:0 10px 28px rgba(14,45,96,.08);
+      overflow:hidden;
+    }
+    .header{
+      padding:22px;
+      background:linear-gradient(135deg,#0d3778,var(--brand));
+      color:#fff;
+    }
+    .header h1{
+      margin:0 0 6px;
+      font-size:1.45rem;
+    }
+    .header p{
+      margin:0;
+      opacity:.95;
+      font-size:.93rem;
+    }
+    .content{padding:18px}
+    .toolbar{
+      display:flex;
+      gap:10px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+    button{
+      border:0;
+      border-radius:10px;
+      padding:10px 14px;
+      font:inherit;
+      font-weight:600;
+      cursor:pointer;
+    }
+    .btn-primary{background:var(--brand);color:#fff}
+    .btn-primary:hover{background:var(--brand-dark)}
+    .btn-secondary{background:#eaf1ff;color:#104fca}
+    .section{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:14px;
+      margin-bottom:12px;
+    }
+    .title{
+      margin:0 0 10px;
+      font-size:1.02rem;
+      color:#14345f;
+    }
+    ul{
+      margin:0;
+      padding-left:18px;
+    }
+    li{margin-bottom:6px}
+    .objetivo-texto{
+      margin:0;
+      line-height:1.55;
+      font-size:.95rem;
+    }
+    .objetivo-texto + .objetivo-texto{margin-top:10px}
+    .objetivo-destacado{
+      color:#1d4f96;
+      font-weight:600;
+    }
+    .screen-only{
+      margin-top:12px;
+      font-size:.8rem;
+      color:var(--muted);
+      text-align:center;
+    }
+    table.tabla-precio{
+      width:100%;
+      border-collapse:collapse;
+      border:1px solid var(--line);
+      border-radius:10px;
+      overflow:hidden;
+    }
+    table.tabla-precio th,
+    table.tabla-precio td{
+      border-bottom:1px solid var(--line);
+      padding:9px 8px;
+      text-align:left;
+      font-size:.92rem;
+    }
+    table.tabla-precio th{
+      background:#edf3ff;
+      color:#1a3f75;
+    }
+    table.tabla-precio tr:last-child td{border-bottom:0}
+    table.datos-grid{
+      width:100%;
+      border-collapse:collapse;
+      border:1px solid var(--line);
+      border-radius:10px;
+      overflow:hidden;
+      table-layout:fixed;
+    }
+    table.datos-grid td{
+      border:1px solid var(--line);
+      padding:10px 12px;
+      vertical-align:middle;
+      text-align:left;
+      font-size:.92rem;
+    }
+    table.datos-grid .datos-lab{
+      width:22%;
+      background:#f4f8fc;
+      color:var(--muted);
+      font-size:.82rem;
+      font-weight:600;
+    }
+    table.datos-grid .datos-val{
+      width:28%;
+      font-size:.95rem;
+      font-weight:700;
+      color:var(--text);
+    }
+    .total{
+      margin-top:10px;
+      display:flex;
+      justify-content:flex-end;
+      font-size:1.05rem;
+      font-weight:700;
+      color:var(--ok);
+    }
+    .total-mensual{
+      margin-top:6px;
+      display:flex;
+      justify-content:flex-end;
+      font-size:1rem;
+      font-weight:700;
+      color:#14345f;
+    }
+    .foot{
+      margin-top:14px;
+      font-size:.84rem;
+      color:var(--muted);
+      text-align:right;
+    }
+    .print-hint{
+      margin:0 0 12px;
+      padding:10px 12px;
+      font-size:.82rem;
+      color:#1a3f75;
+      background:#eaf1ff;
+      border:1px solid var(--line);
+      border-radius:10px;
+      line-height:1.45;
+    }
+    .nota-modulos{
+      margin:0;
+      padding:10px 12px;
+      font-size:.88rem;
+      background:#fffbeb;
+      border:1px solid #fcd34d;
+      border-radius:10px;
+      color:#78350f;
+      line-height:1.5;
+    }
+    @media (max-width:760px){
+      .grid{grid-template-columns:1fr}
+    }
+    @page{
+      size:A4 portrait;
+      margin:5mm;
+    }
+    @media print{
+      *{
+        -webkit-print-color-adjust:exact !important;
+        print-color-adjust:exact !important;
+        color-adjust:exact !important;
+      }
+      html,body{
+        background:linear-gradient(120deg,#edf3ff,#f8fbff 60%,#eef8f2) !important;
+      }
+      .page{margin:0 auto;max-width:100%;padding:0}
+      .card{
+        zoom:0.78;
+        background:#fff !important;
+        border:1px solid var(--line) !important;
+        border-radius:14px !important;
+        box-shadow:0 10px 28px rgba(14,45,96,.08) !important;
+        overflow:hidden !important;
+      }
+      .toolbar,.print-hint,.screen-only{display:none!important}
+      .header{
+        padding:18px 20px !important;
+        background:linear-gradient(135deg,#0d3778,var(--brand)) !important;
+        color:#fff !important;
+      }
+      .content{padding:14px 16px !important}
+      .section{
+        border:1px solid var(--line) !important;
+        border-radius:12px !important;
+        margin-bottom:8px !important;
+        padding:10px 12px !important;
+        background:#fff !important;
+      }
+      .title{margin:0 0 6px !important;font-size:1rem !important}
+      table.tabla-precio th{background:#edf3ff !important}
+      table.datos-grid .datos-lab{background:#f4f8fc !important}
+      a{color:#14345f !important;text-decoration:underline !important}
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="card">
+      <header class="header">
+        <h1>Cotización — Agente de WhatsApp (IA)</h1>
+        <p>Propuesta comercial — Gestoría Nacional + consulta de inventario</p>
+      </header>
+
+      <main class="content">
+        <div class="toolbar">
+          <button class="btn-primary" onclick="window.print()">Descargar PDF</button>
+          <button class="btn-secondary" onclick="cambiarFecha()">Actualizar fecha</button>
+        </div>
+        <p class="print-hint">
+          <strong>PDF:</strong> activa <strong>Gráficos de fondo</strong> y desactiva <strong>Encabezado y pie de página</strong>. Si salen 2 páginas, baja <strong>Escala</strong> a ~90–95%.
+        </p>
+
+        <section class="section">
+          <h2 class="title">Datos de la propuesta</h2>
+          <table class="datos-grid" role="presentation">
+            <tbody>
+              <tr>
+                <td class="datos-lab">Proveedor</td>
+                <td class="datos-val">Abner Moreno</td>
+                <td class="datos-lab">Cliente</td>
+                <td class="datos-val">Gestoría Nacional</td>
+              </tr>
+              <tr>
+                <td class="datos-lab">Teléfono</td>
+                <td class="datos-val">777 440 3046</td>
+                <td class="datos-lab">Sitio web</td>
+                <td class="datos-val"><a href="https://itsystems.solutions" target="_blank" rel="noopener" style="color:#14345f;text-decoration:none">itsystems.solutions</a></td>
+              </tr>
+              <tr>
+                <td class="datos-lab">Fecha</td>
+                <td class="datos-val" id="fecha"></td>
+                <td class="datos-lab">Vigencia</td>
+                <td class="datos-val">15 días naturales</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="section section-objetivo">
+          <h2 class="title">Objetivo</h2>
+          <p class="objetivo-texto">
+            Poner a su negocio un <strong>asistente en WhatsApp</strong> que converse de forma natural con sus clientes y pueda orientarlos sobre <strong>los servicios de gestoría</strong> y sobre <strong>los vehículos que aparecen a la venta en su página</strong>, de modo que las respuestas reflejen lo que usted ya tiene publicado y actualizado en el sitio.
+          </p>
+          <p class="objetivo-texto">
+            El trabajo se hará <strong>por partes y con calma</strong>: en cada etapa le mostramos cómo se comporta el asistente, usted lo prueba con preguntas reales y, cuando esté conforme con ese bloque, <strong>recién entonces</strong> pasamos al siguiente. Así evitamos sorpresas y cada avance queda claro antes de seguir.
+          </p>
+          <p class="objetivo-texto objetivo-destacado">
+            Un apoyo para atender dudas frecuentes y mostrar su oferta, <strong>sin reemplazar</strong> el criterio de un gestor ni comprometer plazos, montos o trámites que no estén explícitamente en la información que usted autorice.
+          </p>
+        </section>
+
+        <section class="section">
+          <h2 class="title">Metodología (módulos por etapas)</h2>
+          <p class="nota-modulos">
+            <strong>Cómo avanzamos:</strong> acordamos juntos qué incluye la primera entrega, la probamos en WhatsApp y la damos por cerrada cuando cumple lo prometido. Si más adelante quiere que el asistente haga cosas nuevas (más temas, otro tono, otras preguntas), eso se ve en una siguiente etapa y, de ser necesario, con su propia cotización.
+          </p>
+        </section>
+
+        <section class="section">
+          <h2 class="title">Inversión y renta mensual</h2>
+          <table class="tabla-precio">
+            <thead>
+              <tr>
+                <th>Concepto</th>
+                <th>Monto (MXN)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Desarrollo e implementación inicial del agente (módulos acordados en esta fase, metodología por etapas)</td>
+                <td>$8,000.00</td>
+              </tr>
+              <tr>
+                <td>Renta mensual — hospedaje del asistente, uso de inteligencia artificial acordado, revisión de que siga respondiendo bien y ajustes pequeños de rutina. <strong>No incluye</strong> desarrollos grandes ni funciones nuevas (eso se cotiza aparte).</td>
+                <td>$1,500.00 / mes</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="total">Inversión inicial: $8,000.00 MXN</div>
+          <div class="total-mensual">Renta mensual: $1,500.00 MXN</div>
+        </section>
+
+        <section class="section">
+          <h2 class="title">Condiciones</h2>
+          <ul>
+            <li>Forma de pago de la inversión inicial: <strong>50% de anticipo</strong> para iniciar y <strong>50% al cerrar</strong> la fase de módulos acordados en esta propuesta (o según calendario de hitos por módulo, si se firma anexo).</li>
+            <li>Renta mensual: facturación / pago por mes por adelantado, a partir del mes en que el bot quede en operación estable acordada. El proveedor absorbe dentro de esta renta el costo del servidor del asistente y del uso de inteligencia artificial previsto para el volumen habitual de conversación.</li>
+            <li>La renta mensual <strong>no incluye</strong> desarrollo de nuevos módulos extensos; esos se cotizan por separado o se agregan por acuerdo escrito.</li>
+            <li>Plazos de entrega por módulo dependen de la complejidad de cada etapa y de la disponibilidad de información y pruebas por parte del cliente.</li>
+          </ul>
+        </section>
+
+        <section class="section">
+          <h2 class="title">Aceptación</h2>
+          <table class="datos-grid" role="presentation">
+            <tbody>
+              <tr>
+                <td class="datos-lab">Nombre y firma cliente</td>
+                <td class="datos-val" colspan="3">____________________________</td>
+              </tr>
+              <tr>
+                <td class="datos-lab">Fecha de autorización</td>
+                <td class="datos-val" colspan="3">____________________________</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <div class="foot screen-only">Solo en pantalla: usa «Descargar PDF» y desactiva encabezado/pie del navegador.</div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    function hoy() {
+      const d = new Date();
+      return d.toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" });
+    }
+    function cambiarFecha() {
+      document.getElementById("fecha").textContent = hoy();
+    }
+    cambiarFecha();
+  </script>
+</body>
+</html>

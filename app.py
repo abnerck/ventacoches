@@ -787,12 +787,37 @@ def _bot_api_gate():
     return None
 
 
+def _public_site_base():
+    return (os.getenv('PUBLIC_SITE_URL') or '').strip().rstrip('/')
+
+
+def _bot_car_payload(data):
+    """Si PUBLIC_SITE_URL está definida, las rutas /static/... pasan a URL absoluta (útil en WhatsApp)."""
+    base = _public_site_base()
+    if not base:
+        return data
+    out = dict(data)
+    fp = out.get('foto_principal')
+    if fp and isinstance(fp, str) and fp.startswith('/'):
+        out['foto_principal'] = base + fp
+    fotos = out.get('fotos')
+    if fotos and isinstance(fotos, list):
+        out['fotos'] = [
+            (base + u if isinstance(u, str) and u.startswith('/') else u) for u in fotos
+        ]
+    return out
+
+
 @app.route('/api/bot/health', methods=['GET'])
 def api_bot_health():
     gate = _bot_api_gate()
     if gate:
         return gate
-    return jsonify({'ok': True, 'service': 'gestoria-ventacoches-bot'})
+    return jsonify({
+        'ok': True,
+        'service': 'gestoria-ventacoches-bot',
+        'absolute_media': bool(_public_site_base()),
+    })
 
 
 @app.route('/api/bot/gestoria', methods=['GET'])
@@ -817,7 +842,8 @@ def api_bot_coches():
     if solo_activos:
         query = query.filter_by(activo=True)
     cars = query.order_by(Car.fecha_creacion.desc()).all()
-    return jsonify([car_to_dict(car) for car in cars])
+    payload = [_bot_car_payload(car_to_dict(car)) for car in cars]
+    return jsonify(payload)
 
 
 @app.route('/api/bot/coche/<int:id>', methods=['GET'])
@@ -828,7 +854,7 @@ def api_bot_coche(id):
     car = Car.query.get_or_404(id)
     data = car_to_dict(car)
     data['fotos'] = [get_photo_url(car.id, p.filename) for p in car.fotos]
-    return jsonify(data)
+    return jsonify(_bot_car_payload(data))
 
 
 init_app_db()
