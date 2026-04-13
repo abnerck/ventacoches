@@ -1,68 +1,82 @@
-# Agente WhatsApp (Node en VPS) + API en la web (PythonAnywhere)
+# Agente WhatsApp (VPS)
 
-La carpeta **`whatsapp-agent/`** está en **`.gitignore`**: el repo versiona el **sitio Flask** y la **API `/api/bot/*`**; el proceso Node se despliega aparte en el VPS.
+Código en **`whatsapp-agent/`** (Node.js): **whatsapp-web.js** (QR) + **DeepSeek** + API **`/api/bot/*`** del sitio en PythonAnywhere.
 
-## API `/api/bot/*` (en `app.py`)
-
-Todas requieren cabecera **`X-Bot-Key`**: el mismo valor que **`BOT_API_KEY`** en el `.env` del servidor (PythonAnywhere).
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/api/bot/health` | Comprueba clave y servicio; `absolute_media` indica si `PUBLIC_SITE_URL` está configurada. |
-| GET | `/api/bot/gestoria` | JSON de `data/gestoria_servicios.json`. |
-| GET | `/api/bot/coches` | Lista de coches; query `activos=false` para incluir inactivos. |
-| GET | `/api/bot/coche/<id>` | Detalle + lista `fotos` (URLs). |
-
-**`PUBLIC_SITE_URL`** (opcional, sin `/` final): si está definida en el servidor (ej. `https://tuusuario.pythonanywhere.com`), las rutas de fotos salen como URL absoluta para que el bot pueda enviar enlaces válidos en WhatsApp.
-
-### Variables en PythonAnywhere (Web → Variables de entorno o `.env`)
-
-- `BOT_API_KEY` — obligatoria para que la API responda al bot.
-- `PUBLIC_SITE_URL` — recomendada para fotos absolutas.
-
-Tras cambiar variables: **Reload** de la web app.
-
-### Probar desde tu PC (sustituye URL y clave)
+## En el servidor (VPS) — comandos
 
 ```bash
-curl -sS -H "X-Bot-Key: TU_CLAVE" "https://TUUSUARIO.pythonanywhere.com/api/bot/health"
-```
+cd ~
+# Si el repo ya está en el VPS:
+cd ruta/al/ventacoches/whatsapp-agent
+# O clona el repo y entra a whatsapp-agent
 
-## Qué sube con Git
-
-- `app.py` (incluye `/api/bot/*`)
-- `data/gestoria_servicios.json`
-- `.env.example` (plantilla; **no** subas `.env`)
-
-## Dónde está el bot
-
-En tu PC: `whatsapp-agent/` junto al proyecto (por comodidad), **sin** `git push` al repo principal.
-
-## Llevar el agente al VPS
-
-```powershell
-scp -r C:\Users\abner\OneDrive\Escritorio\ventacoches\whatsapp-agent usuario@TU_VPS:/home/usuario/
-```
-
-En el VPS:
-
-```bash
-cd ~/whatsapp-agent
 cp .env.example .env
-nano .env
+nano .env   # SITE_URL, BOT_API_KEY (igual que Flask), DEEPSEEK_API_KEY
+
+# Node 18+ recomendado
 npm install
 npm start
 ```
 
-En el `.env` del bot: URL base del sitio en PA, la misma `BOT_API_KEY`, y claves DeepSeek / sesión WhatsApp según tu `whatsapp-agent`.
+La primera vez aparece un **QR en la terminal**: WhatsApp → Ajustes → Dispositivos vinculados → Vincular.
 
-## Opcional: repo Git solo del agente
+## Producción (que no se caiga al cerrar SSH)
 
 ```bash
-cd whatsapp-agent
-git init
-git add .
-git commit -m "agente"
+sudo apt install -y screen   # o usa pm2: npm i -g pm2
+screen -S wa
+cd ~/ventacoches/whatsapp-agent && npm start
+# Ctrl+A, D para desenganchar
 ```
 
-Remoto privado (GitHub/GitLab) solo para el bot.
+## Si Puppeteer / Chrome falla (Ubuntu)
+
+```bash
+sudo apt update
+sudo apt install -y ca-certificates fonts-liberation libnss3 libatk1.0-0 libgbm1 libxss1 libasound2
+```
+
+## Variables `.env` del bot
+
+| Variable | Ejemplo |
+|----------|---------|
+| `SITE_URL` | `https://gestorianacional.com.mx` |
+| `BOT_API_KEY` | Misma que en Flask / `.env` de PA |
+| `DEEPSEEK_API_KEY` | De [platform.deepseek.com](https://platform.deepseek.com) |
+| `ALLOW_FROM` | Opcional: `521234567890,5219988776655` (solo esos números) |
+| `LEAD_NOTIFY_NUMBERS` | Opcional: números **México** `521…` separados por coma. Si el bot detecta interés claro (ej. “me interesa”, “quiero cotizar”, “sí” tras una oferta), envía un aviso por WhatsApp a esos números (máx. uno cada ~12 min por chat). |
+
+## Actualizar solo el agente (Git + VPS)
+
+El agente vive en la carpeta **`whatsapp-agent/`** del mismo repo que Flask. No hace falta un repo aparte salvo que quieras uno.
+
+1. **Aquí (PC):** cambias `whatsapp-agent/`, haces `git add`, `commit` y `push` al repo (toda la app o solo archivos del agente).
+2. **En el VPS:** entras al **directorio raíz del repo** (donde está `whatsapp-agent/`), `git pull`, y **solo reinicias el bot** (no hace falta tocar PythonAnywhere si no cambiaste Flask):
+
+```bash
+cd ~/ventacoches   # o la ruta donde clonaste el repo
+git pull
+cd whatsapp-agent
+# si cambió package.json:
+# npm install
+screen -r wabot   # o como llames a la sesión
+# Ctrl+C y luego:
+npm start
+# Ctrl+A, D
+```
+
+Si el VPS solo tiene **copiada** la carpeta `whatsapp-agent` sin git, entonces o clonas el repo completo una vez, o sincronizas con `rsync`/`scp` desde tu máquina; lo recomendable es **mismo repo** y `git pull` en la raíz.
+
+## Comandos en WhatsApp (chat privado)
+
+| Comando | Efecto |
+|---------|--------|
+| `!pausar` | Ese chat deja de recibir respuestas de la IA hasta `!activar`. |
+| `!activar` | Quita la pausa en ese chat. |
+| `!estado` | Cuántos chats están en pausa en total y si el tuyo está pausado. |
+
+La pausa es por chat y vive en memoria: si reinicias el bot, se olvida.
+
+## API en Flask
+
+Ver rutas `/api/bot/*` en `app.py`. El WSGI en PA debe cargar `BOT_API_KEY` (y `load_dotenv` del `.env` del proyecto).
