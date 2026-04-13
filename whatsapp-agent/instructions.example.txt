@@ -1,0 +1,9 @@
+Pega este archivo como instructions.txt en el VPS (o edita solo .env con BOT_EXTRA_INSTRUCTIONS).
+
+Ejemplos de lo que puedes escribir:
+- Horario de atención y ciudad.
+- Frases que quieres que use o evite.
+- Cómo derivar a un humano (teléfono / cita).
+- Política: no dar precios finales sin confirmar, etc.
+
+Las borras y pones las tuyas; si instructions.txt está vacío o no existe, solo se usan las reglas por defecto del código.
