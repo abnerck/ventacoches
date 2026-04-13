@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ car.marca }} {{ car.modelo }} - Gestoría Nacional{% endblock %}
+{% block title %}{{ car.marca }} {{ car.modelo }} - Autofácil | Coches en venta{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -358,7 +358,7 @@
                     <a href="{{ url_for('gestoria') }}"><i class="fas fa-house me-1"></i>Inicio</a>
                 </li>
                 <li class="breadcrumb-item">
-                    <a href="{{ url_for('public_cars') }}">Colección</a>
+                    <a href="{{ url_for('public_cars') }}">Coches en venta</a>
                 </li>
                 <li class="breadcrumb-item active">{{ car.marca }} {{ car.modelo }}</li>
             </ol>
@@ -506,7 +506,7 @@
                         <hr class="sidebar-divider">
 
                         <!-- Actions -->
-                        <a href="https://wa.me/34910000000?text=Hola, me interesa el {{ car.marca }} {{ car.modelo }} ({{ car.año }})"
+                        <a href="https://wa.me/527778017434?text=Hola, me interesa el {{ car.marca }} {{ car.modelo }} ({{ car.año }})"
                            target="_blank"
                            class="action-btn whatsapp">
                             <i class="fab fa-whatsapp"></i> Contactar por WhatsApp

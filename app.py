@@ -13,10 +13,12 @@ import shutil
 from dotenv import load_dotenv
 from datetime import datetime
 
-load_dotenv()
-
 # SQLite en instance/ (convención Flask). Si aún tienes cars.db en la raíz del proyecto, se copia una vez.
 _APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(_APP_ROOT, '.env'))
+# PythonAnywhere suele usar working directory = padre del proyecto (ej. /home/user/ con código en /home/user/proyecto/)
+if not (os.getenv('BOT_API_KEY') or '').strip():
+    load_dotenv(os.path.join(os.path.dirname(_APP_ROOT), '.env'))
 _INSTANCE_DIR = os.path.join(_APP_ROOT, 'instance')
 os.makedirs(_INSTANCE_DIR, exist_ok=True)
 _DB_INSTANCE = os.path.join(_INSTANCE_DIR, 'cars.db')
@@ -302,11 +304,8 @@ def gestoria():
 
 @app.route("/inicio")
 def home():
-    """Vitrina con últimas incorporaciones (coches)."""
-    cars = Car.query.filter_by(activo=True).order_by(Car.fecha_creacion.desc()).limit(6).all()
-    for car in cars:
-        car.photo_url = get_primary_photo_url(car)
-    return render_template("index.html", cars=cars)
+    """Antes vitrina de coches; ahora el catálogo vive solo en /coches (evita duplicar con /inicio)."""
+    return redirect(url_for("public_cars"))
 
 @app.route("/coches")
 def public_cars():

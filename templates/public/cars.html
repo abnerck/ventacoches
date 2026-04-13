@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Coches en venta - Gestoría Nacional{% endblock %}
+{% block title %}Coches en venta - Autofácil | Cuernavaca, Morelos{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -57,6 +57,13 @@
         font-size: .92rem;
         font-weight: 400;
         margin: 0;
+    }
+    .page-header .page-loc {
+        color: rgba(255,255,255,.88);
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0.5rem 0 0;
+        letter-spacing: 0.4px;
     }
     .catalog-header-brand {
         display: flex;
@@ -340,10 +347,10 @@
         <div class="page-header-watermark">CATÁLOGO</div>
         <div class="container" data-aos="fade-up">
             <div class="catalog-header-brand">
-                <img src="{{ url_for('static', filename='img/lg.png') }}" alt="Gestoría Nacional" class="catalog-header-logo" width="140" height="40">
-                <p class="page-subtitle mb-0">Catálogo de vehículos</p>
+                <img src="{{ url_for('static', filename='img/logo autofacil blanco.png') }}" alt="Autofácil" class="catalog-header-logo" width="160" height="44">
             </div>
-            <h1 class="page-title">Coches en <span>Venta</span></h1>
+            <h1 class="page-title">Coches en <span>venta</span></h1>
+            <p class="page-loc">Cuernavaca, Morelos</p>
             <span class="count-pill">
                 <i class="fas fa-car"></i>
                 {{ cars.total }} vehículos disponibles
@@ -566,7 +573,7 @@
             <h3>Colección en Preparación</h3>
             <p>Nuestro equipo está seleccionando los vehículos más exclusivos para ti. Vuelve pronto.</p>
             <a href="{{ url_for('gestoria') }}" class="btn-primary-custom">
-                <i class="fas fa-home"></i> Volver al inicio
+                <i class="fas fa-home"></i> Volver a Gestoría Nacional
             </a>
         </div>
 
