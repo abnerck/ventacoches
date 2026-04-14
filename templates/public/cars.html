@@ -58,13 +58,6 @@
         font-weight: 400;
         margin: 0;
     }
-    .page-header .page-loc {
-        color: rgba(255,255,255,.88);
-        font-size: 1rem;
-        font-weight: 600;
-        margin: 0.5rem 0 0;
-        letter-spacing: 0.4px;
-    }
     .catalog-header-brand {
         display: flex;
         align-items: center;
@@ -100,8 +93,20 @@
         padding: 1rem 0;
         position: sticky;
         top: var(--navbar-height);
-        z-index: 100;
+        /* Por debajo de modales/dropdowns Bootstrap; el <select> nativo no debe tapar paginación */
+        z-index: 20;
         box-shadow: 0 4px 16px rgba(0,0,0,.06);
+    }
+    /* Evita que inputs/selects desborden y tapen la columna de “resultados” */
+    .filters-bar .row {
+        --bs-gutter-x: 14px;
+    }
+    .filters-bar .row > [class*="col"] {
+        min-width: 0;
+    }
+    .filters-results-col {
+        position: relative;
+        z-index: 2;
     }
     .filter-group { position: relative; }
     .filter-group .filter-icon {
@@ -122,6 +127,12 @@
         background: var(--light-bg);
         transition: border-color .25s, box-shadow .25s;
         height: 42px;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .filter-group .form-select {
+        text-overflow: ellipsis;
     }
     .filter-group .form-control:focus,
     .filter-group .form-select:focus {
@@ -154,12 +165,19 @@
         color: #999;
         font-weight: 600;
         white-space: nowrap;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .results-info strong { color: var(--primary); }
 
     /* ── GRID ── */
     .catalog-grid {
         padding-top: 2rem;
+    }
+    .catalog-pagination {
+        position: relative;
+        z-index: 30;
     }
 
     /* ── CAR CARD ── */
@@ -350,7 +368,6 @@
                 <img src="{{ url_for('static', filename='img/logo autofacil blanco.png') }}" alt="Autofácil" class="catalog-header-logo" width="160" height="44">
             </div>
             <h1 class="page-title">Coches en <span>venta</span></h1>
-            <p class="page-loc">Cuernavaca, Morelos</p>
             <span class="count-pill">
                 <i class="fas fa-car"></i>
                 {{ cars.total }} vehículos disponibles
@@ -404,7 +421,7 @@
                 </div>
 
                 <!-- Price -->
-                <div class="col-md-2 col-6">
+                <div class="col-md-2 col-6 filters-price-col">
                     <div class="filter-group">
                         <i class="fas fa-dollar-sign filter-icon"></i>
                         <select class="form-select" id="priceFilter">
@@ -417,8 +434,8 @@
                     </div>
                 </div>
 
-                <!-- Reset + count -->
-                <div class="col-md-2 col-6 d-flex align-items-center justify-content-end gap-3">
+                <!-- Reset + count (separación extra del select de precio) -->
+                <div class="col-md-2 col-6 d-flex align-items-center justify-content-end gap-2 gap-md-3 flex-wrap filters-results-col ps-md-2">
                     <span class="results-info">
                         <strong id="visibleCount">{{ cars.total }}</strong> resultados
                     </span>
@@ -525,7 +542,7 @@
 
         <!-- ── PAGINACIÓN ── -->
         {% if cars.pages > 1 %}
-        <nav class="d-flex justify-content-center mt-5" data-aos="fade-up">
+        <nav class="d-flex justify-content-center mt-5 catalog-pagination" data-aos="fade-up">
             <ul class="pagination gap-2" style="--bs-pagination-border-radius:50px;">
                 <!-- Anterior -->
                 <li class="page-item {% if not cars.has_prev %}disabled{% endif %}">
